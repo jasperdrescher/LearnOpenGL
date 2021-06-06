@@ -42,6 +42,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "GLFW_INCLUDE_NONE")
 set(GLM_DIR "${DEPS_DIR}/glm")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLM_DIR}")
 
+# STB
+set(STB_DIR "${DEPS_DIR}/stb")
+target_include_directories(${PROJECT_NAME} PRIVATE "${STB_DIR}")
+
 # GLAD
 set(GLAD_DIR "${DEPS_DIR}/glad")
 set(GLAD_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/glad")
