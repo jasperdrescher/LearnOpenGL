@@ -12,7 +12,7 @@ ShaderProgram::ShaderProgram()
 
 }
 
-void ShaderProgram::CreateShaderProgram(const std::string& aVertexShaderFilePath, const std::string& aFragmentShaderFilePath)
+void ShaderProgram::Create(const std::string& aVertexShaderFilePath, const std::string& aFragmentShaderFilePath)
 {
 	std::string vertexShaderSource;
 	std::string fragmentShaderSource;

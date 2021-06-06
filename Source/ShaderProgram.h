@@ -7,8 +7,7 @@ class ShaderProgram
 public:
 	ShaderProgram();
 
-	void CreateShaderProgram(const std::string& aVertexShaderFilePath, const std::string& aFragmentShaderFilePath);
-
+	void Create(const std::string& aVertexShaderFilePath, const std::string& aFragmentShaderFilePath);
 	void Use();
 	void Delete();
 
