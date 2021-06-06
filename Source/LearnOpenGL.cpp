@@ -1,8 +1,11 @@
 #include "ShaderProgram.h"
 #include "Texture.h"
 
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 
@@ -157,6 +160,8 @@ int main()
 
 	CheckGLError(window);
 
+	glm::mat4 matrix = glm::mat4(1.0f);
+
     while (!glfwWindowShouldClose(window))
     {
         ProcessInput(window);
@@ -169,7 +174,13 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());
 
+		glm::vec3 translation = glm::vec3(0.00001f, -0.00001f, 0.0f);
+		matrix = glm::translate(matrix, translation);
+
 		shaderProgram.Use();
+		unsigned int transformLoc = glGetUniformLocation(shaderProgram.GetID(), "transform");
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
