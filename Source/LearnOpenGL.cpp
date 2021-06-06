@@ -5,7 +5,6 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 
@@ -178,8 +177,7 @@ int main()
 		matrix = glm::translate(matrix, translation);
 
 		shaderProgram.Use();
-		unsigned int transformLoc = glGetUniformLocation(shaderProgram.GetID(), "transform");
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+		shaderProgram.SetMatrix4x4("transform", matrix);
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

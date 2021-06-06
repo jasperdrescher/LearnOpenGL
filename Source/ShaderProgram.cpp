@@ -1,6 +1,7 @@
 #include "ShaderProgram.h"
 
-#include "glad/glad.h"
+#include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -98,15 +99,25 @@ void ShaderProgram::Delete()
 
 void ShaderProgram::SetBool(const std::string& aName, const bool aValue)
 {
-	glUniform1i(glGetUniformLocation(myID, aName.c_str()), static_cast<int>(aValue));
+	glUniform1i(GetLocation(aName), static_cast<int>(aValue));
 }
 
 void ShaderProgram::SetInt(const std::string& aName, const int aValue)
 {
-	glUniform1i(glGetUniformLocation(myID, aName.c_str()), aValue);
+	glUniform1i(GetLocation(aName), aValue);
 }
 
 void ShaderProgram::SetFloat(const std::string& aName, const float aValue)
 {
-	glUniform1f(glGetUniformLocation(myID, aName.c_str()), aValue);
+	glUniform1f(GetLocation(aName), aValue);
+}
+
+void ShaderProgram::SetMatrix4x4(const std::string& aName, const glm::mat4x4& aValue)
+{
+	glUniformMatrix4fv(GetLocation(aName), 1, GL_FALSE, glm::value_ptr(aValue));
+}
+
+unsigned int ShaderProgram::GetLocation(const std::string& aName) const
+{
+	return glGetUniformLocation(myID, aName.c_str());
 }
