@@ -27,7 +27,7 @@ set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "LearnOpenGL")
 set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies")
 
 # GLFW
-set(GLFW_DIR "${DEPS_DIR}/GLFW")
+set(GLFW_DIR "${DEPS_DIR}/glfw")
 set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
 set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build the GLFW test programs")
 set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build the GLFW documentation")
@@ -38,12 +38,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${GLFW_DIR}/include")
 target_compile_definitions(${PROJECT_NAME} PRIVATE "GLFW_INCLUDE_NONE")
 
 # GLM
-set(GLM_DIR "${DEPS_DIR}/GLM")
+set(GLM_DIR "${DEPS_DIR}/glm")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLM_DIR}")
 
 # GLAD
-set(GLAD_DIR "${DEPS_DIR}/GLAD")
-set(GLAD_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/GLAD")
+set(GLAD_DIR "${DEPS_DIR}/glad")
+set(GLAD_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/glad")
 add_subdirectory("${GLAD_DIR}" glad)
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_BIN_DIR}/include")
 target_link_libraries(${PROJECT_NAME} "glad")
