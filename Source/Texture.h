@@ -11,7 +11,6 @@ public:
 
 	unsigned int GetID() const { return myID; }
 
-protected:
 private:
 	unsigned int myID;
 	int myWidth;
