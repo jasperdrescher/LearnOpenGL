@@ -163,6 +163,7 @@ int main()
 	glm::mat4 view = glm::mat4(1.0f);
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+	const float radius = 10.0f;
 
 	glm::vec3 cubePositions[] = {
 	glm::vec3(0.0f,  0.0f,  0.0f),
@@ -188,6 +189,10 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, containerTexture.GetID());
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());
+
+		const float camX = static_cast<float>(sin(glfwGetTime())) * radius;
+		const float camZ = static_cast<float>(cos(glfwGetTime())) * radius;
+		view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
 
 		shaderProgram.Use();
 		shaderProgram.SetMatrix4x4("view", view);
