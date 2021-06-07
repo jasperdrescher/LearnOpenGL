@@ -47,11 +47,13 @@ void InputManager::OnCursorAction(double aX, double aY)
 	if (myCamera->myPitch < -89.0f)
 		myCamera->myPitch = -89.0f;
 
-	glm::vec3 direction;
+	glm::vec3 direction(0.0f);
 	direction.x = cos(glm::radians(myCamera->myYaw)) * cos(glm::radians(myCamera->myPitch));
 	direction.y = sin(glm::radians(myCamera->myPitch));
 	direction.z = sin(glm::radians(myCamera->myYaw)) * cos(glm::radians(myCamera->myPitch));
-	myCamera->myFront = glm::normalize(direction);
+	myCamera->myForward = glm::normalize(direction);
+	myCamera->myRight = glm::normalize(glm::cross(myCamera->myForward, myCamera->myWorldUp));
+	myCamera->myUp = glm::normalize(glm::cross(myCamera->myRight, myCamera->myForward));
 }
 
 void InputManager::OnScrollAction(double aXOffset, double aYOffset)

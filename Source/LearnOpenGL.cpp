@@ -81,13 +81,13 @@ void ProcessInput(GLFWwindow* aWindow, Camera& aCamera, const float aDeltaTime)
 	if (glfwGetKey(aWindow, GLFW_KEY_2) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if (glfwGetKey(aWindow, GLFW_KEY_W) == GLFW_PRESS)
-		aCamera.myPosition += (aCamera.mySpeed * aDeltaTime) * aCamera.myFront;
+		aCamera.myPosition += (aCamera.mySpeed * aDeltaTime) * aCamera.myForward;
 	if (glfwGetKey(aWindow, GLFW_KEY_S) == GLFW_PRESS)
-		aCamera.myPosition -= (aCamera.mySpeed * aDeltaTime) * aCamera.myFront;
+		aCamera.myPosition -= (aCamera.mySpeed * aDeltaTime) * aCamera.myForward;
 	if (glfwGetKey(aWindow, GLFW_KEY_A) == GLFW_PRESS)
-		aCamera.myPosition -= glm::normalize(glm::cross(aCamera.myFront, aCamera.myUp)) * (aCamera.mySpeed * aDeltaTime);
+		aCamera.myPosition -= glm::normalize(glm::cross(aCamera.myForward, aCamera.myUp)) * (aCamera.mySpeed * aDeltaTime);
 	if (glfwGetKey(aWindow, GLFW_KEY_D) == GLFW_PRESS)
-		aCamera.myPosition += glm::normalize(glm::cross(aCamera.myFront, aCamera.myUp)) * (aCamera.mySpeed * aDeltaTime);
+		aCamera.myPosition += glm::normalize(glm::cross(aCamera.myForward, aCamera.myUp)) * (aCamera.mySpeed * aDeltaTime);
 }
 
 int main()
@@ -210,7 +210,6 @@ int main()
 
         ProcessInput(window, camera, deltaTime);
 
-		camera.myView = glm::lookAt(camera.myPosition, camera.myPosition + camera.myFront, camera.myUp);
 		camera.myProjection = glm::perspective(glm::radians(camera.myFoV), 800.0f / 600.0f, 0.1f, 100.0f);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -222,7 +221,7 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());
 
 		shaderProgram.Use();
-		shaderProgram.SetMatrix4x4("view", camera.myView);
+		shaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
 		shaderProgram.SetMatrix4x4("projection", camera.myProjection);
 
 		glBindVertexArray(VAO);
