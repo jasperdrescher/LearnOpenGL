@@ -1,3 +1,4 @@
+#include "Camera.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
 
@@ -60,7 +61,7 @@ void FrameBufferSizeCallback(GLFWwindow* /*aWindow*/, int aWidth, int aHeight)
     glViewport(0, 0, aWidth, aHeight);
 }
 
-void ProcessInput(GLFWwindow* aWindow)
+void ProcessInput(GLFWwindow* aWindow, Camera& aCamera)
 {
     if (glfwGetKey(aWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(aWindow, true);
@@ -68,6 +69,14 @@ void ProcessInput(GLFWwindow* aWindow)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	if (glfwGetKey(aWindow, GLFW_KEY_2) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (glfwGetKey(aWindow, GLFW_KEY_W) == GLFW_PRESS)
+		aCamera.myPosition += aCamera.mySpeed * aCamera.myFront;
+	if (glfwGetKey(aWindow, GLFW_KEY_S) == GLFW_PRESS)
+		aCamera.myPosition -= aCamera.mySpeed * aCamera.myFront;
+	if (glfwGetKey(aWindow, GLFW_KEY_A) == GLFW_PRESS)
+		aCamera.myPosition -= glm::normalize(glm::cross(aCamera.myFront, aCamera.myUp)) * aCamera.mySpeed;
+	if (glfwGetKey(aWindow, GLFW_KEY_D) == GLFW_PRESS)
+		aCamera.myPosition += glm::normalize(glm::cross(aCamera.myFront, aCamera.myUp)) * aCamera.mySpeed;
 }
 
 int main()
@@ -160,10 +169,13 @@ int main()
 
 	CheckGLError(window);
 
-	glm::mat4 view = glm::mat4(1.0f);
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-	const float radius = 10.0f;
+	Camera camera;
+	camera.mySpeed = 0.002f;
+	camera.myView = glm::translate(camera.myView, glm::vec3(0.0f, 0.0f, -3.0f));
+	camera.myProjection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+	camera.myPosition = glm::vec3(0.0f, 0.0f, 3.0f);
+	camera.myFront = glm::vec3(0.0f, 0.0f, -1.0f);
+	camera.myUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	glm::vec3 cubePositions[] = {
 	glm::vec3(0.0f,  0.0f,  0.0f),
@@ -180,7 +192,9 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
-        ProcessInput(window);
+        ProcessInput(window, camera);
+
+		camera.myView = glm::lookAt(camera.myPosition, camera.myPosition + camera.myFront, camera.myUp);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -190,13 +204,9 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());
 
-		const float camX = static_cast<float>(sin(glfwGetTime())) * radius;
-		const float camZ = static_cast<float>(cos(glfwGetTime())) * radius;
-		view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-
 		shaderProgram.Use();
-		shaderProgram.SetMatrix4x4("view", view);
-		shaderProgram.SetMatrix4x4("projection", projection);
+		shaderProgram.SetMatrix4x4("view", camera.myView);
+		shaderProgram.SetMatrix4x4("projection", camera.myProjection);
 
 		glBindVertexArray(VAO);
 		for (int index = 0; index < 10; index++)
