@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "InputManager.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
 
@@ -9,9 +10,9 @@
 
 #include <iostream>
 
-void GlfwErrorCallback(int anError, const char* aDescription)
+void GlfwErrorCallback(int aError, const char* aDescription)
 {
-	printf("%i %s\n", anError, aDescription);
+	printf("%i %s\n", aError, aDescription);
 }
 
 static inline void CheckGLError(GLFWwindow* aWindow)
@@ -61,7 +62,17 @@ void FrameBufferSizeCallback(GLFWwindow* /*aWindow*/, int aWidth, int aHeight)
     glViewport(0, 0, aWidth, aHeight);
 }
 
-void ProcessInput(GLFWwindow* aWindow, Camera& aCamera)
+void CursorCallback(GLFWwindow* /*aWindow*/, double aX, double aY)
+{
+	InputManager::GetInstance().OnCursorAction(aX, aY);
+}
+
+void ScrollCallback(GLFWwindow* /*aWindow*/, double aXOffset, double aYOffset)
+{
+	InputManager::GetInstance().OnScrollAction(aXOffset, aYOffset);
+}
+
+void ProcessInput(GLFWwindow* aWindow, Camera& aCamera, const float aDeltaTime)
 {
     if (glfwGetKey(aWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(aWindow, true);
@@ -70,13 +81,13 @@ void ProcessInput(GLFWwindow* aWindow, Camera& aCamera)
 	if (glfwGetKey(aWindow, GLFW_KEY_2) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if (glfwGetKey(aWindow, GLFW_KEY_W) == GLFW_PRESS)
-		aCamera.myPosition += aCamera.mySpeed * aCamera.myFront;
+		aCamera.myPosition += (aCamera.mySpeed * aDeltaTime) * aCamera.myFront;
 	if (glfwGetKey(aWindow, GLFW_KEY_S) == GLFW_PRESS)
-		aCamera.myPosition -= aCamera.mySpeed * aCamera.myFront;
+		aCamera.myPosition -= (aCamera.mySpeed * aDeltaTime) * aCamera.myFront;
 	if (glfwGetKey(aWindow, GLFW_KEY_A) == GLFW_PRESS)
-		aCamera.myPosition -= glm::normalize(glm::cross(aCamera.myFront, aCamera.myUp)) * aCamera.mySpeed;
+		aCamera.myPosition -= glm::normalize(glm::cross(aCamera.myFront, aCamera.myUp)) * (aCamera.mySpeed * aDeltaTime);
 	if (glfwGetKey(aWindow, GLFW_KEY_D) == GLFW_PRESS)
-		aCamera.myPosition += glm::normalize(glm::cross(aCamera.myFront, aCamera.myUp)) * aCamera.mySpeed;
+		aCamera.myPosition += glm::normalize(glm::cross(aCamera.myFront, aCamera.myUp)) * (aCamera.mySpeed * aDeltaTime);
 }
 
 int main()
@@ -114,6 +125,9 @@ int main()
     glViewport(0, 0, 800, 600);
 
     glfwSetFramebufferSizeCallback(window, FrameBufferSizeCallback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, CursorCallback);
+	glfwSetScrollCallback(window, ScrollCallback);
 
 	ShaderProgram shaderProgram;
 	shaderProgram.Create("Data/DefaultVertexShader.vert.glsl", "Data/DefaultFragmentShader.frag.glsl");
@@ -170,12 +184,7 @@ int main()
 	CheckGLError(window);
 
 	Camera camera;
-	camera.mySpeed = 0.002f;
-	camera.myView = glm::translate(camera.myView, glm::vec3(0.0f, 0.0f, -3.0f));
-	camera.myProjection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-	camera.myPosition = glm::vec3(0.0f, 0.0f, 3.0f);
-	camera.myFront = glm::vec3(0.0f, 0.0f, -1.0f);
-	camera.myUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	InputManager::GetInstance().AssignCamera(&camera);
 
 	glm::vec3 cubePositions[] = {
 	glm::vec3(0.0f,  0.0f,  0.0f),
@@ -190,11 +199,19 @@ int main()
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
     while (!glfwWindowShouldClose(window))
     {
-        ProcessInput(window, camera);
+		const float currentFrame = static_cast<float>(glfwGetTime());
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+        ProcessInput(window, camera, deltaTime);
 
 		camera.myView = glm::lookAt(camera.myPosition, camera.myPosition + camera.myFront, camera.myUp);
+		camera.myProjection = glm::perspective(glm::radians(camera.myFoV), 800.0f / 600.0f, 0.1f, 100.0f);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
