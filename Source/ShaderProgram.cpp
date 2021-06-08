@@ -117,6 +117,11 @@ void ShaderProgram::SetMatrix4x4(const std::string& aName, const glm::mat4x4& aV
 	glUniformMatrix4fv(GetLocation(aName), 1, GL_FALSE, glm::value_ptr(aValue));
 }
 
+void ShaderProgram::SetVector3(const std::string& aName, const glm::vec3& aValue)
+{
+	glUniform3f(GetLocation(aName), aValue.x, aValue.y, aValue.z);
+}
+
 unsigned int ShaderProgram::GetLocation(const std::string& aName) const
 {
 	return glGetUniformLocation(myID, aName.c_str());

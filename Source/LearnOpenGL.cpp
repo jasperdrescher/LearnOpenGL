@@ -15,7 +15,89 @@ void GlfwErrorCallback(int aError, const char* aDescription)
 	printf("%i %s\n", aError, aDescription);
 }
 
-static inline void CheckGLError(GLFWwindow* aWindow)
+static inline void GLAPIENTRY GlErrorCallback(GLenum aSource, GLenum aType, GLuint aID, GLenum aSeverity, GLsizei /*aLength*/, const GLchar* aMessage, const void* /*aUserParam*/)
+{
+	std::string source;
+	std::string type;
+	std::string severity;
+
+	switch (aSource)
+	{
+		case GL_DEBUG_SOURCE_API:
+			source = "API";
+			break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+			source = "WINDOW SYSTEM";
+			break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER:
+			source = "SHADER COMPILER";
+			break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY:
+			source = "THIRD PARTY";
+			break;
+		case GL_DEBUG_SOURCE_APPLICATION:
+			source = "APPLICATION";
+			break;
+		case GL_DEBUG_SOURCE_OTHER:
+			source = "OTHER";
+			break;
+		default:
+			source = "UNKNOWN";
+			break;
+	}
+
+	switch (aType)
+	{
+		case GL_DEBUG_TYPE_ERROR:
+			type = "ERROR";
+			break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+			type = "DEPRECATED BEHAVIOR";
+			break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+			type = "UDEFINED BEHAVIOR";
+			break;
+		case GL_DEBUG_TYPE_PORTABILITY:
+			type = "PORTABILITY";
+			break;
+		case GL_DEBUG_TYPE_PERFORMANCE:
+			type = "PERFORMANCE";
+			break;
+		case GL_DEBUG_TYPE_OTHER:
+			type = "OTHER";
+			break;
+		case GL_DEBUG_TYPE_MARKER:
+			type = "MARKER";
+			break;
+		default:
+			type = "UNKNOWN";
+			break;
+	}
+
+	switch (aSeverity)
+	{
+		case GL_DEBUG_SEVERITY_HIGH:
+			severity = "HIGH";
+			break;
+		case GL_DEBUG_SEVERITY_MEDIUM:
+			severity = "MEDIUM";
+			break;
+		case GL_DEBUG_SEVERITY_LOW:
+			severity = "LOW";
+			break;
+		case GL_DEBUG_SEVERITY_NOTIFICATION:
+			severity = "NOTIFICATION";
+			break;
+		default:
+			severity = "UNKNOWN";
+			break;
+	}
+
+	printf("Severity: %s Type: %s Source: %s Id: 0x%x", severity.c_str(), type.c_str(), source.c_str(), aID);
+	printf(aMessage);
+}
+
+static inline void CheckGlError(GLFWwindow* aWindow)
 {
 	while (true)
 	{
@@ -53,7 +135,6 @@ static inline void CheckGLError(GLFWwindow* aWindow)
 		}
 
 		printf(errorString);
-		glfwSetWindowShouldClose(aWindow, true);
 	}
 }
 
@@ -103,7 +184,9 @@ int main()
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
     if (!window)
@@ -121,6 +204,11 @@ int main()
         return -1;
     }
 
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE);
+	glDebugMessageCallback(GlErrorCallback, nullptr);
+
 	glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, 800, 600);
 
@@ -129,8 +217,8 @@ int main()
 	glfwSetCursorPosCallback(window, CursorCallback);
 	glfwSetScrollCallback(window, ScrollCallback);
 
-	ShaderProgram shaderProgram;
-	shaderProgram.Create("Data/DefaultVertexShader.vert.glsl", "Data/DefaultFragmentShader.frag.glsl");
+	ShaderProgram defaultShaderProgram;
+	defaultShaderProgram.Create("Data/Default.vert.glsl", "Data/Default.frag.glsl");
 
 	float vertices[] = {
 		// positions          // colors           // texture coordinates
@@ -143,6 +231,50 @@ int main()
 	unsigned int indices[] = {
 	   0, 1, 3, // first triangle
 	   1, 2, 3  // second triangle
+	};
+
+	float LampVertices[] = {
+		-0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+
+		-0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,
+
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+
+		-0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f, -0.5f,
+
+		-0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
 	};
 
 	unsigned int VAO;
@@ -171,17 +303,34 @@ int main()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
+	unsigned int lampVAO;
+	glGenVertexArrays(1, &lampVAO);
+
+	unsigned int lampVBO;
+	glGenBuffers(1, &lampVBO);
+
+	glBindVertexArray(lampVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, lampVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(LampVertices), LampVertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<void*>(0));
+	glEnableVertexAttribArray(0);
+
 	Texture containerTexture;
 	containerTexture.Create("Data/Container.jpg");
 
 	Texture awesomeTexture;
 	awesomeTexture.Create("Data/Awesome.png");
 
-	shaderProgram.Use();
-	shaderProgram.SetInt("texture1", 0);
-	shaderProgram.SetInt("texture2", 1);
+	defaultShaderProgram.Use();
+	defaultShaderProgram.SetInt("texture1", 0);
+	defaultShaderProgram.SetInt("texture2", 1);
 
-	CheckGLError(window);
+	ShaderProgram lightCubeShaderProgram;
+	lightCubeShaderProgram.Create("Data/Lamp.vert.glsl", "Data/Lamp.frag.glsl");
+
+	CheckGlError(window);
 
 	Camera camera;
 	InputManager::GetInstance().AssignCamera(&camera);
@@ -198,6 +347,9 @@ int main()
 	glm::vec3(1.5f,  0.2f, -1.5f),
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
+
+	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
@@ -220,9 +372,10 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());
 
-		shaderProgram.Use();
-		shaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
-		shaderProgram.SetMatrix4x4("projection", camera.myProjection);
+		defaultShaderProgram.Use();
+		defaultShaderProgram.SetMatrix4x4("projection", camera.myProjection);
+		defaultShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
+		defaultShaderProgram.SetVector3("lightColor", lightColor);
 
 		glBindVertexArray(VAO);
 		for (int index = 0; index < 10; index++)
@@ -231,21 +384,32 @@ int main()
 			model = glm::translate(model, cubePositions[index]);
 			float angle = 20.0f * index;
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			shaderProgram.SetMatrix4x4("model", model);
+			defaultShaderProgram.SetMatrix4x4("model", model);
 
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		}
 
+		lightCubeShaderProgram.Use();
+		lightCubeShaderProgram.SetMatrix4x4("projection", camera.myProjection);
+		lightCubeShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
+		glm::mat4 model(1.0f);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.2f));
+		lightCubeShaderProgram.SetMatrix4x4("model", model);
+
+		glBindVertexArray(lampVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-		CheckGLError(window);
+		CheckGlError(window);
     }
 
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
-	shaderProgram.Delete();
+	defaultShaderProgram.Delete();
 
     glfwTerminate();
 
