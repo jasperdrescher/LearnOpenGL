@@ -46,6 +46,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${GLM_DIR}")
 set(STB_DIR "${DEPS_DIR}/stb")
 target_include_directories(${PROJECT_NAME} PRIVATE "${STB_DIR}")
 
+# TINYOBJLOADER
+set(TINYOBJLOADER_DIR "${DEPS_DIR}/tinyobjloader")
+target_include_directories(${PROJECT_NAME} PRIVATE "${TINYOBJLOADER_DIR}")
+
 # GLAD
 set(GLAD_DIR "${DEPS_DIR}/glad")
 set(GLAD_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/glad")

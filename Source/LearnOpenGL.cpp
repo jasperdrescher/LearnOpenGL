@@ -7,12 +7,181 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+
+#include <filesystem>
 #include <iostream>
+#include <unordered_map>
 
 void GlfwErrorCallback(int aError, const char* aDescription)
 {
 	printf("%i %s\n", aError, aDescription);
+}
+
+bool DoesFileExist(const std::string& aPath)
+{
+	std::filesystem::file_status fileStatus;
+	std::filesystem::path test = std::filesystem::current_path();
+	return std::filesystem::status_known(fileStatus) ? std::filesystem::exists(fileStatus) : std::filesystem::exists(aPath);
+}
+
+std::string ReadFile(const std::string& aPath)
+{
+	std::string sourceResult;
+	std::ifstream sourceStream(aPath, std::ios::in);
+
+	if (!sourceStream.is_open())
+	{
+		printf("File can't be read: %s", aPath.c_str());
+		return "";
+	}
+
+	std::stringstream sourceStringStream;
+	sourceStringStream << sourceStream.rdbuf();
+	sourceResult = sourceStringStream.str();
+	sourceStream.close();
+
+	return sourceResult;
+}
+
+std::string GetNameFromPath(const std::string& aPath)
+{
+	const std::size_t& nameStartIndex = aPath.find_last_of("/\\") + 1;
+	const std::size_t& extensionStartIndex = aPath.find_last_of(".");
+	return aPath.substr(nameStartIndex, aPath.length() - nameStartIndex - (aPath.length() - extensionStartIndex));
+}
+
+std::string GetExtensionFromPath(const std::string& aPath)
+{
+	const std::size_t& extensionStartIndex = aPath.find_last_of(".") + 1;
+	return aPath.substr(extensionStartIndex, aPath.length() - extensionStartIndex);
+}
+
+std::string GetDirectoryFromPath(const std::string& aPath)
+{
+	std::size_t lastSlashIndex = aPath.find_last_of("/\\");
+	return aPath.substr(0, lastSlashIndex + 1);
+}
+
+struct Vertex
+{
+	glm::vec3 myPosition;
+	glm::vec3 myNormal;
+	//glm::vec2 myTextureCoordinates;
+
+	bool operator==(const Vertex& aOther) const
+	{
+		return myPosition == aOther.myPosition;
+		//return myPosition == aOther.myPosition && myTextureCoordinates == aOther.myTextureCoordinates;
+	}
+};
+
+inline void CombineHash(std::size_t& aSeed) {}
+
+template <typename T, typename... Rest>
+inline void CombineHash(std::size_t& aSeed, const T& aValue, Rest... aRest)
+{
+	std::hash<T> hasher;
+	aSeed ^= hasher(aValue) + 0x9e3779b9 + (aSeed << 6) + (aSeed >> 2);
+	CombineHash(aSeed, aRest...);
+}
+
+namespace std
+{
+	template<> struct hash<Vertex>
+	{
+		size_t operator()(Vertex const& aVertex) const
+		{
+			size_t seed = 0;
+			CombineHash(seed, aVertex.myPosition);
+			return seed;
+		}
+	};
+}
+
+struct Mesh
+{
+	std::vector<Vertex> myVertices;
+	std::vector<unsigned int> myIndices;
+};
+
+Mesh* LoadObj(const std::string& aFilePath)
+{
+	tinyobj::attrib_t attributes;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	std::string warning;
+	std::string error;
+
+	const std::string& fileName = GetNameFromPath(aFilePath);
+	const std::string& directory = GetDirectoryFromPath(aFilePath);
+	const std::string& fileExtension = GetExtensionFromPath(aFilePath);
+
+	if (!tinyobj::LoadObj(&attributes, &shapes, &materials, &warning, &error, aFilePath.c_str(), directory.c_str(), true))
+	{
+		printf("Failed to load %s", aFilePath.c_str());
+
+		return nullptr;
+	}
+
+	if (!warning.empty())
+	{
+		printf("%s", warning.c_str());
+	}
+
+	if (!error.empty())
+	{
+		printf("%s", error.c_str());
+	}
+
+	std::unordered_map<Vertex, unsigned int> uniqueVertices = {};
+
+	for (const tinyobj::shape_t& shape : shapes)
+	{
+		Mesh* mesh = new Mesh();
+
+		for (const tinyobj::index_t& index : shape.mesh.indices)
+		{
+			Vertex vertex;
+			const size_t vertexIndexStride = 3 * static_cast<size_t>(index.vertex_index);
+			vertex.myPosition.x = attributes.vertices[vertexIndexStride + 0];
+			vertex.myPosition.y = attributes.vertices[vertexIndexStride + 1];
+			vertex.myPosition.z = attributes.vertices[vertexIndexStride + 2];
+
+			if (attributes.normals.size() > 0)
+			{
+				vertex.myNormal.x = attributes.normals[vertexIndexStride + 0];
+				vertex.myNormal.y = attributes.normals[vertexIndexStride + 1];
+				vertex.myNormal.z = attributes.normals[vertexIndexStride + 2];
+			}
+
+			/*if (attributes.texcoords.size() > 0)
+			{
+				const size_t textureCoordinatesIndexStride = 2 * static_cast<size_t>(index.texcoord_index);
+				vertex.myTextureCoordinates.x = attributes.texcoords[textureCoordinatesIndexStride + 0];
+				vertex.myTextureCoordinates.y = attributes.texcoords[textureCoordinatesIndexStride + 1];
+			}*/
+
+			if (uniqueVertices.count(vertex) == 0)
+			{
+				uniqueVertices[vertex] = static_cast<unsigned int>(mesh->myVertices.size());
+				mesh->myVertices.push_back(vertex);
+			}
+
+			mesh->myIndices.push_back(uniqueVertices[vertex]);
+		}
+
+		return mesh;
+	}
+
+	return nullptr;
 }
 
 static inline void GLAPIENTRY GlErrorCallback(GLenum aSource, GLenum aType, GLuint aID, GLenum aSeverity, GLsizei /*aLength*/, const GLchar* aMessage, const void* /*aUserParam*/)
@@ -218,7 +387,9 @@ int main()
 	glfwSetScrollCallback(window, ScrollCallback);
 
 	ShaderProgram defaultShaderProgram;
-	defaultShaderProgram.Create("Data/Default.vert.glsl", "Data/Default.frag.glsl");
+	defaultShaderProgram.Create("Data/Colored.vert.glsl", "Data/Colored.frag.glsl");
+
+	Mesh* mesh = LoadObj("Data/Cube.obj");
 
 	float vertices[] = {
 		// positions          // colors           // texture coordinates
@@ -289,19 +460,19 @@ int main()
 	glBindVertexArray(VAO);
 	
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, mesh->myVertices.size() * sizeof(Vertex), &mesh->myVertices.front(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->myIndices.size() * sizeof(unsigned int), &mesh->myIndices.front(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(0));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myPosition)));
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myNormal)));
 	glEnableVertexAttribArray(1);
 
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	/*glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myTextureCoordinates)));
+	glEnableVertexAttribArray(2);*/
 
 	unsigned int lampVAO;
 	glGenVertexArrays(1, &lampVAO);
@@ -367,15 +538,15 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		glActiveTexture(GL_TEXTURE0);
+		/*glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, containerTexture.GetID());
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());
+		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());*/
 
 		defaultShaderProgram.Use();
 		defaultShaderProgram.SetMatrix4x4("projection", camera.myProjection);
 		defaultShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
-		defaultShaderProgram.SetVector3("lightColor", lightColor);
+		//defaultShaderProgram.SetVector3("lightColor", lightColor);
 
 		glBindVertexArray(VAO);
 		for (int index = 0; index < 10; index++)
@@ -386,7 +557,7 @@ int main()
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			defaultShaderProgram.SetMatrix4x4("model", model);
 
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, mesh->myIndices.size(), GL_UNSIGNED_INT, 0);
 		}
 
 		lightCubeShaderProgram.Use();
