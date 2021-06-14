@@ -2,6 +2,8 @@
 
 #include "Mesh.h"
 
+#include <string>
+
 class MeshManager
 {
 public:

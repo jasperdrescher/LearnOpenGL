@@ -4,9 +4,12 @@
 #include <tiny_obj_loader.h>
 
 #include <filesystem>
+#include <unordered_map>
 
 Mesh* MeshManager::LoadObj(const std::string& aFilePath)
 {
+	printf("Loading %s\n", aFilePath.c_str());
+
 	tinyobj::attrib_t attributes;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -20,19 +23,18 @@ Mesh* MeshManager::LoadObj(const std::string& aFilePath)
 
 	if (!tinyobj::LoadObj(&attributes, &shapes, &materials, &warning, &error, aFilePath.c_str(), directory.c_str(), true))
 	{
-		printf("Failed to load %s", aFilePath.c_str());
-
+		printf("Failed to load %s\n", aFilePath.c_str());
 		return nullptr;
 	}
 
 	if (!warning.empty())
 	{
-		printf("%s", warning.c_str());
+		printf("%s\n", warning.c_str());
 	}
 
 	if (!error.empty())
 	{
-		printf("%s", error.c_str());
+		printf("%s\n", error.c_str());
 	}
 
 	printf("Vertices %i\n", static_cast<int>(attributes.vertices.size()) / 3);
@@ -42,7 +44,7 @@ Mesh* MeshManager::LoadObj(const std::string& aFilePath)
 	printf("Materials %i\n", static_cast<int>(materials.size()));
 	printf("Shapes %i\n", static_cast<int>(shapes.size()));
 
-	std::unordered_map<Vertex, unsigned int> uniqueVertices = {};
+	std::unordered_map<Vertex, unsigned int> uniqueVertices;
 	Mesh* mesh = new Mesh();
 
 	for (const tinyobj::shape_t& shape : shapes)
@@ -55,11 +57,12 @@ Mesh* MeshManager::LoadObj(const std::string& aFilePath)
 			vertex.myPosition.y = attributes.vertices[vertexIndexStride + 1];
 			vertex.myPosition.z = attributes.vertices[vertexIndexStride + 2];
 
-			if (attributes.normals.size() > 0)
+			if (attributes.normals.size() > 0 )
 			{
-				vertex.myNormal.x = attributes.normals[vertexIndexStride + 0];
-				vertex.myNormal.y = attributes.normals[vertexIndexStride + 1];
-				vertex.myNormal.z = attributes.normals[vertexIndexStride + 2];
+				const size_t normalIndexStride = 3 * static_cast<size_t>(index.normal_index);
+				vertex.myNormal.x = attributes.normals[normalIndexStride + 0];
+				vertex.myNormal.y = attributes.normals[normalIndexStride + 1];
+				vertex.myNormal.z = attributes.normals[normalIndexStride + 2];
 			}
 
 			if (attributes.colors.size() > 0)
@@ -67,6 +70,10 @@ Mesh* MeshManager::LoadObj(const std::string& aFilePath)
 				vertex.myColor.x = attributes.colors[vertexIndexStride + 0];
 				vertex.myColor.y = attributes.colors[vertexIndexStride + 1];
 				vertex.myColor.z = attributes.colors[vertexIndexStride + 2];
+			}
+			else
+			{
+				vertex.myColor = glm::vec3(1.0f);
 			}
 
 			if (attributes.texcoords.size() > 0)
@@ -84,11 +91,11 @@ Mesh* MeshManager::LoadObj(const std::string& aFilePath)
 
 			mesh->myIndices.push_back(uniqueVertices[vertex]);
 		}
-
-		myMeshes.emplace_back(*mesh);
 	}
 
 	printf("Indices %i\n", static_cast<int>(mesh->myIndices.size()));
+
+	myMeshes.push_back(*mesh);
 
 	return mesh;
 }
@@ -107,7 +114,7 @@ std::string MeshManager::ReadFile(const std::string& aPath) const
 
 	if (!sourceStream.is_open())
 	{
-		printf("File can't be read: %s", aPath.c_str());
+		printf("File can't be read: %s\n", aPath.c_str());
 		return "";
 	}
 

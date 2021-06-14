@@ -9,8 +9,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <glm/vec2.hpp>
-
 void GlfwErrorCallback(int aError, const char* aDescription)
 {
 	printf("%i %s\n", aError, aDescription);
@@ -218,29 +216,29 @@ int main()
 	glfwSetCursorPosCallback(window, CursorCallback);
 	glfwSetScrollCallback(window, ScrollCallback);
 
-	ShaderProgram defaultShaderProgram;
-	defaultShaderProgram.Create("Data/Colored.vert.glsl", "Data/Colored.frag.glsl");
+	ShaderProgram coloredShaderProgram;
+	coloredShaderProgram.Create("Data/Colored.vert.glsl", "Data/Colored.frag.glsl");
 
 	MeshManager meshManager;
+	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/ColoredCube.obj");
+	Mesh* cubeMesh = meshManager.LoadObj("Data/Cube.obj");
 
-	Mesh* cubeMesh = meshManager.LoadObj("Data/ColoredCube.obj");
+	unsigned int coloredCubeVAO;
+	glGenVertexArrays(1, &coloredCubeVAO);
 
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
+	unsigned int coloredCubeVBO;
+	glGenBuffers(1, &coloredCubeVBO);
 
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
+	unsigned int coloredCubeEBO;
+	glGenBuffers(1, &coloredCubeEBO);
 
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
+	glBindVertexArray(coloredCubeVAO);
 	
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, cubeMesh->myVertices.size() * sizeof(Vertex), cubeMesh->myVertices.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, coloredCubeVBO);
+	glBufferData(GL_ARRAY_BUFFER, coloredCubeMesh->myVertices.size() * sizeof(Vertex), coloredCubeMesh->myVertices.data(), GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, cubeMesh->myIndices.size() * sizeof(unsigned int), cubeMesh->myIndices.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, coloredCubeEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, coloredCubeMesh->myIndices.size() * sizeof(unsigned int), coloredCubeMesh->myIndices.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, myPosition)));
 	glEnableVertexAttribArray(0);
@@ -260,15 +258,21 @@ int main()
 	unsigned int lampVBO;
 	glGenBuffers(1, &lampVBO);
 
+	unsigned int lampEBO;
+	glGenBuffers(1, &lampEBO);
+
 	glBindVertexArray(lampVAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, lampVBO);
 	glBufferData(GL_ARRAY_BUFFER, cubeMesh->myVertices.size() * sizeof(Vertex), cubeMesh->myVertices.data(), GL_STATIC_DRAW);
 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lampEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, cubeMesh->myIndices.size() * sizeof(unsigned int), cubeMesh->myIndices.data(), GL_STATIC_DRAW);
+
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, myPosition)));
 	glEnableVertexAttribArray(0);
 
-	Texture containerTexture;
+	/*Texture containerTexture;
 	containerTexture.Create("Data/Container.jpg");
 
 	Texture awesomeTexture;
@@ -276,10 +280,10 @@ int main()
 
 	defaultShaderProgram.Use();
 	defaultShaderProgram.SetInt("texture1", 0);
-	defaultShaderProgram.SetInt("texture2", 1);
+	defaultShaderProgram.SetInt("texture2", 1);*/
 
-	ShaderProgram lightCubeShaderProgram;
-	lightCubeShaderProgram.Create("Data/Lamp.vert.glsl", "Data/Lamp.frag.glsl");
+	ShaderProgram lampShaderProgram;
+	lampShaderProgram.Create("Data/Lamp.vert.glsl", "Data/Lamp.frag.glsl");
 
 	CheckGlError(window);
 
@@ -323,33 +327,33 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());*/
 
-		defaultShaderProgram.Use();
-		defaultShaderProgram.SetMatrix4x4("projection", camera.myProjection);
-		defaultShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
+		coloredShaderProgram.Use();
+		coloredShaderProgram.SetMatrix4x4("projection", camera.myProjection);
+		coloredShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
 		//defaultShaderProgram.SetVector3("lightColor", lightColor);
 
-		glBindVertexArray(VAO);
+		glBindVertexArray(coloredCubeVAO);
 		for (int index = 0; index < 10; index++)
 		{
-			glm::mat4 model = glm::mat4(1.0f);
+			glm::mat4 model = glm::mat4(0.5f);
 			model = glm::translate(model, cubePositions[index]);
 			float angle = 20.0f * index;
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			defaultShaderProgram.SetMatrix4x4("model", model);
+			coloredShaderProgram.SetMatrix4x4("model", model);
 
-			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(coloredCubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
 		}
 
-		lightCubeShaderProgram.Use();
-		lightCubeShaderProgram.SetMatrix4x4("projection", camera.myProjection);
-		lightCubeShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
+		lampShaderProgram.Use();
+		lampShaderProgram.SetMatrix4x4("projection", camera.myProjection);
+		lampShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
 		glm::mat4 model(1.0f);
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
-		lightCubeShaderProgram.SetMatrix4x4("model", model);
+		lampShaderProgram.SetMatrix4x4("model", model);
 
 		glBindVertexArray(lampVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -357,10 +361,15 @@ int main()
 		CheckGlError(window);
     }
 
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	defaultShaderProgram.Delete();
+	glDeleteVertexArrays(1, &coloredCubeVAO);
+	glDeleteBuffers(1, &coloredCubeVBO);
+	glDeleteBuffers(1, &coloredCubeEBO);
+	glDeleteVertexArrays(1, &lampVAO);
+	glDeleteBuffers(1, &lampVBO);
+	lampShaderProgram.Delete();
+	coloredShaderProgram.Delete();
+	delete cubeMesh;
+	delete coloredCubeMesh;
 
     glfwTerminate();
 
