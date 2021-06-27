@@ -219,10 +219,10 @@ int main()
 	const std::string shadersFolder = "Data/Shaders/";
 
 	ShaderProgram coloredShaderProgram;
-	coloredShaderProgram.Create(shadersFolder + "Ambient.vert.glsl", shadersFolder + "Ambient.frag.glsl");
+	coloredShaderProgram.Create(shadersFolder + "Materials.vert.glsl", shadersFolder + "Materials.frag.glsl");
 
 	MeshManager meshManager;
-	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/ColoredCube.obj");
+	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/Cube.obj");
 	Mesh* cubeMesh = meshManager.LoadObj("Data/Cube.obj");
 
 	unsigned int coloredCubeVAO;
@@ -346,6 +346,10 @@ int main()
 			coloredShaderProgram.SetVector3("lightColor", lightColor);
 			coloredShaderProgram.SetVector3("lightPosition", lightPosition);
 			coloredShaderProgram.SetVector3("viewPosition", camera.myPosition);
+			coloredShaderProgram.SetVector3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
+			coloredShaderProgram.SetVector3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
+			coloredShaderProgram.SetVector3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+			coloredShaderProgram.SetFloat("material.shininess", 32.0f);
 
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(coloredCubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
 		}
