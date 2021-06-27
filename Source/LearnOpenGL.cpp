@@ -321,6 +321,11 @@ int main()
 
 		camera.myProjection = glm::perspective(glm::radians(camera.myFoV), 800.0f / 600.0f, 0.1f, 100.0f);
 		lightPosition = glm::vec3(sin(glfwGetTime()) * 4.0f, cos(glfwGetTime()) * 4.0f, 0.0f);
+		lightColor.x = sin(glfwGetTime() * 2.0f);
+		lightColor.y = sin(glfwGetTime() * 0.7f);
+		lightColor.z = sin(glfwGetTime() * 1.3f);
+		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
+		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -343,13 +348,15 @@ int main()
 			float angle = 20.0f * index;
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			coloredShaderProgram.SetMatrix4x4("model", model);
-			coloredShaderProgram.SetVector3("lightColor", lightColor);
 			coloredShaderProgram.SetVector3("lightPosition", lightPosition);
 			coloredShaderProgram.SetVector3("viewPosition", camera.myPosition);
 			coloredShaderProgram.SetVector3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
 			coloredShaderProgram.SetVector3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
 			coloredShaderProgram.SetVector3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 			coloredShaderProgram.SetFloat("material.shininess", 32.0f);
+			coloredShaderProgram.SetVector3("light.ambient", ambientColor);
+			coloredShaderProgram.SetVector3("light.diffuse", diffuseColor);
+			coloredShaderProgram.SetVector3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(coloredCubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
 		}
