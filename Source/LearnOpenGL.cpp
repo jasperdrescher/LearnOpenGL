@@ -216,8 +216,10 @@ int main()
 	glfwSetCursorPosCallback(window, CursorCallback);
 	glfwSetScrollCallback(window, ScrollCallback);
 
+	const std::string shadersFolder = "Data/Shaders/";
+
 	ShaderProgram coloredShaderProgram;
-	coloredShaderProgram.Create("Data/Colored.vert.glsl", "Data/Colored.frag.glsl");
+	coloredShaderProgram.Create(shadersFolder + "Ambient.vert.glsl", shadersFolder + "Ambient.frag.glsl");
 
 	MeshManager meshManager;
 	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/ColoredCube.obj");
@@ -283,7 +285,7 @@ int main()
 	defaultShaderProgram.SetInt("texture2", 1);*/
 
 	ShaderProgram lampShaderProgram;
-	lampShaderProgram.Create("Data/Lamp.vert.glsl", "Data/Lamp.frag.glsl");
+	lampShaderProgram.Create(shadersFolder + "Lamp.vert.glsl", shadersFolder + "Lamp.frag.glsl");
 
 	CheckGlError(window);
 
@@ -303,7 +305,7 @@ int main()
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
-	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+	glm::vec3 lightPosition(1.0f);
 	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
 	float deltaTime = 0.0f;
@@ -318,6 +320,7 @@ int main()
         ProcessInput(window, camera, deltaTime);
 
 		camera.myProjection = glm::perspective(glm::radians(camera.myFoV), 800.0f / 600.0f, 0.1f, 100.0f);
+		lightPosition = glm::vec3(sin(glfwGetTime()) * 4.0f, cos(glfwGetTime()) * 4.0f, 0.0f);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -340,6 +343,9 @@ int main()
 			float angle = 20.0f * index;
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			coloredShaderProgram.SetMatrix4x4("model", model);
+			coloredShaderProgram.SetVector3("lightColor", lightColor);
+			coloredShaderProgram.SetVector3("lightPosition", lightPosition);
+			coloredShaderProgram.SetVector3("viewPosition", camera.myPosition);
 
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(coloredCubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
 		}
@@ -348,7 +354,7 @@ int main()
 		lampShaderProgram.SetMatrix4x4("projection", camera.myProjection);
 		lampShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
 		glm::mat4 model(1.0f);
-		model = glm::translate(model, lightPos);
+		model = glm::translate(model, lightPosition);
 		model = glm::scale(model, glm::vec3(0.2f));
 		lampShaderProgram.SetMatrix4x4("model", model);
 

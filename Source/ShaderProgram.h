@@ -18,6 +18,7 @@ public:
 	void SetFloat(const std::string& aName, const float aValue);
 	void SetMatrix4x4(const std::string& aName, const glm::mat4x4& aValue);
 	void SetVector3(const std::string& aName, const glm::vec3& aValue);
+	void SetVector4(const std::string& aName, const glm::vec4& aValue);
 
 	unsigned int GetID() const { return myID; }
 	unsigned int GetLocation(const std::string& aName) const;
