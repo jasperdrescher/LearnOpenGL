@@ -218,8 +218,8 @@ int main()
 
 	const std::string shadersFolder = "Data/Shaders/";
 
-	ShaderProgram coloredShaderProgram;
-	coloredShaderProgram.Create(shadersFolder + "Materials.vert.glsl", shadersFolder + "Materials.frag.glsl");
+	ShaderProgram cubeShaderProgram;
+	cubeShaderProgram.Create(shadersFolder + "LightingMaps.vert.glsl", shadersFolder + "LightingMaps.frag.glsl");
 
 	MeshManager meshManager;
 	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/Cube.obj");
@@ -248,11 +248,8 @@ int main()
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, myNormal)));
 	glEnableVertexAttribArray(1);
 
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, myColor)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myTextureCoordinates)));
 	glEnableVertexAttribArray(2);
-
-	/*glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myTextureCoordinates)));
-	glEnableVertexAttribArray(2);*/
 
 	unsigned int lampVAO;
 	glGenVertexArrays(1, &lampVAO);
@@ -273,16 +270,6 @@ int main()
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, myPosition)));
 	glEnableVertexAttribArray(0);
-
-	/*Texture containerTexture;
-	containerTexture.Create("Data/Container.jpg");
-
-	Texture awesomeTexture;
-	awesomeTexture.Create("Data/Awesome.png");
-
-	defaultShaderProgram.Use();
-	defaultShaderProgram.SetInt("texture1", 0);
-	defaultShaderProgram.SetInt("texture2", 1);*/
 
 	ShaderProgram lampShaderProgram;
 	lampShaderProgram.Create(shadersFolder + "Lamp.vert.glsl", shadersFolder + "Lamp.frag.glsl");
@@ -308,6 +295,12 @@ int main()
 	glm::vec3 lightPosition(1.0f);
 	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
+	Texture diffuseMap;
+	diffuseMap.Create("Data/Container.jpg");
+
+	Texture specularMap;
+	specularMap.Create("Data/Container.jpg");
+
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 
@@ -320,25 +313,19 @@ int main()
         ProcessInput(window, camera, deltaTime);
 
 		camera.myProjection = glm::perspective(glm::radians(camera.myFoV), 800.0f / 600.0f, 0.1f, 100.0f);
-		lightPosition = glm::vec3(sin(glfwGetTime()) * 4.0f, cos(glfwGetTime()) * 4.0f, 0.0f);
-		lightColor.x = sin(glfwGetTime() * 2.0f);
-		lightColor.y = sin(glfwGetTime() * 0.7f);
-		lightColor.z = sin(glfwGetTime() * 1.3f);
+		lightPosition = glm::vec3(sin(currentFrame) * 4.0f, cos(currentFrame) * 4.0f, 0.0f);
+		lightColor.x = sin(currentFrame * 2.0f);
+		lightColor.y = sin(currentFrame * 0.7f);
+		lightColor.z = sin(currentFrame * 1.3f);
 		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
 		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		/*glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, containerTexture.GetID());
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, awesomeTexture.GetID());*/
 
-		coloredShaderProgram.Use();
-		coloredShaderProgram.SetMatrix4x4("projection", camera.myProjection);
-		coloredShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
-		//defaultShaderProgram.SetVector3("lightColor", lightColor);
+		cubeShaderProgram.Use();
+		cubeShaderProgram.SetMatrix4x4("projection", camera.myProjection);
+		cubeShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
 
 		glBindVertexArray(coloredCubeVAO);
 		for (int index = 0; index < 10; index++)
@@ -347,16 +334,20 @@ int main()
 			model = glm::translate(model, cubePositions[index]);
 			float angle = 20.0f * index;
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			coloredShaderProgram.SetMatrix4x4("model", model);
-			coloredShaderProgram.SetVector3("lightPosition", lightPosition);
-			coloredShaderProgram.SetVector3("viewPosition", camera.myPosition);
-			coloredShaderProgram.SetVector3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
-			coloredShaderProgram.SetVector3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
-			coloredShaderProgram.SetVector3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
-			coloredShaderProgram.SetFloat("material.shininess", 32.0f);
-			coloredShaderProgram.SetVector3("light.ambient", ambientColor);
-			coloredShaderProgram.SetVector3("light.diffuse", diffuseColor);
-			coloredShaderProgram.SetVector3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+			cubeShaderProgram.SetMatrix4x4("model", model);
+			cubeShaderProgram.SetVector3("viewPosition", camera.myPosition);
+			cubeShaderProgram.SetInt("material.diffuse", 0);
+			cubeShaderProgram.SetInt("material.specular", 1);
+			cubeShaderProgram.SetFloat("material.shininess", 64.0f);
+			cubeShaderProgram.SetVector3("light.position", lightPosition);
+			cubeShaderProgram.SetVector3("light.ambient", ambientColor);
+			cubeShaderProgram.SetVector3("light.diffuse", diffuseColor);
+			cubeShaderProgram.SetVector3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, diffuseMap.GetID());
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, specularMap.GetID());
 
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(coloredCubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
 		}
@@ -384,7 +375,7 @@ int main()
 	glDeleteVertexArrays(1, &lampVAO);
 	glDeleteBuffers(1, &lampVBO);
 	lampShaderProgram.Delete();
-	coloredShaderProgram.Delete();
+	cubeShaderProgram.Delete();
 	delete cubeMesh;
 	delete coloredCubeMesh;
 
