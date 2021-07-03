@@ -219,7 +219,7 @@ int main()
 	const std::string shadersFolder = "Data/Shaders/";
 
 	ShaderProgram cubeShaderProgram;
-	cubeShaderProgram.Create(shadersFolder + "LightingMaps.vert.glsl", shadersFolder + "LightingMaps.frag.glsl");
+	cubeShaderProgram.Create(shadersFolder + "LightingCasters.vert.glsl", shadersFolder + "LightingCasters.frag.glsl");
 
 	MeshManager meshManager;
 	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/Cube.obj");
@@ -301,6 +301,8 @@ int main()
 	Texture specularMap;
 	specularMap.Create("Data/Container.jpg");
 
+	const float lightingDistance = 2.0f;
+
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 
@@ -313,12 +315,7 @@ int main()
         ProcessInput(window, camera, deltaTime);
 
 		camera.myProjection = glm::perspective(glm::radians(camera.myFoV), 800.0f / 600.0f, 0.1f, 100.0f);
-		lightPosition = glm::vec3(sin(currentFrame) * 4.0f, cos(currentFrame) * 4.0f, 0.0f);
-		lightColor.x = sin(currentFrame * 2.0f);
-		lightColor.y = sin(currentFrame * 0.7f);
-		lightColor.z = sin(currentFrame * 1.3f);
-		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+		lightPosition = glm::vec3(sin(currentFrame) * lightingDistance, cos(currentFrame) * lightingDistance, 0.0f);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -338,11 +335,17 @@ int main()
 			cubeShaderProgram.SetVector3("viewPosition", camera.myPosition);
 			cubeShaderProgram.SetInt("material.diffuse", 0);
 			cubeShaderProgram.SetInt("material.specular", 1);
-			cubeShaderProgram.SetFloat("material.shininess", 64.0f);
+			cubeShaderProgram.SetFloat("material.shininess", 32.0f);
 			cubeShaderProgram.SetVector3("light.position", lightPosition);
-			cubeShaderProgram.SetVector3("light.ambient", ambientColor);
-			cubeShaderProgram.SetVector3("light.diffuse", diffuseColor);
-			cubeShaderProgram.SetVector3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+			cubeShaderProgram.SetVector3("light.direction", camera.myForward);
+			cubeShaderProgram.SetFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+			cubeShaderProgram.SetFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
+			cubeShaderProgram.SetFloat("light.constant", 1.0f);
+			cubeShaderProgram.SetFloat("light.linear", 0.09f);
+			cubeShaderProgram.SetFloat("light.quadratic", 0.032f);
+			cubeShaderProgram.SetVector3("light.ambient", glm::vec3(0.1f));
+			cubeShaderProgram.SetVector3("light.diffuse", glm::vec3(0.8f));
+			cubeShaderProgram.SetVector3("light.specular", glm::vec3(1.0f));
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, diffuseMap.GetID());
