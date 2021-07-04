@@ -219,7 +219,7 @@ int main()
 	const std::string shadersFolder = "Data/Shaders/";
 
 	ShaderProgram cubeShaderProgram;
-	cubeShaderProgram.Create(shadersFolder + "LightingCasters.vert.glsl", shadersFolder + "LightingCasters.frag.glsl");
+	cubeShaderProgram.Create(shadersFolder + "MultipleLights.vert.glsl", shadersFolder + "MultipleLights.frag.glsl");
 
 	MeshManager meshManager;
 	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/Cube.obj");
@@ -280,20 +280,24 @@ int main()
 	InputManager::GetInstance().AssignCamera(&camera);
 
 	glm::vec3 cubePositions[] = {
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(2.0f,  5.0f, -15.0f),
-	glm::vec3(-1.5f, -2.2f, -2.5f),
-	glm::vec3(-3.8f, -2.0f, -12.3f),
-	glm::vec3(2.4f, -0.4f, -3.5f),
-	glm::vec3(-1.7f,  3.0f, -7.5f),
-	glm::vec3(1.3f, -2.0f, -2.5f),
-	glm::vec3(1.5f,  2.0f, -2.5f),
-	glm::vec3(1.5f,  0.2f, -1.5f),
-	glm::vec3(-1.3f,  1.0f, -1.5f)
+		glm::vec3(0.0f,  0.0f,  0.0f),
+		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f,  2.0f, -2.5f),
+		glm::vec3(1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
-	glm::vec3 lightPosition(1.0f);
-	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+	glm::vec3 pointLightPositions[] = {
+		glm::vec3(0.7f,  0.2f,  2.0f),
+		glm::vec3(2.3f, -3.3f, -4.0f),
+		glm::vec3(-4.0f,  2.0f, -12.0f),
+		glm::vec3(0.0f,  0.0f, -3.0f)
+	};
 
 	Texture diffuseMap;
 	diffuseMap.Create("Data/Container.jpg");
@@ -315,7 +319,6 @@ int main()
         ProcessInput(window, camera, deltaTime);
 
 		camera.myProjection = glm::perspective(glm::radians(camera.myFoV), 800.0f / 600.0f, 0.1f, 100.0f);
-		lightPosition = glm::vec3(sin(currentFrame) * lightingDistance, cos(currentFrame) * lightingDistance, 0.0f);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -325,27 +328,45 @@ int main()
 		cubeShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
 
 		glBindVertexArray(coloredCubeVAO);
-		for (int index = 0; index < 10; index++)
+		for (int cubeIndex = 0; cubeIndex < 10; cubeIndex++)
 		{
 			glm::mat4 model = glm::mat4(0.5f);
-			model = glm::translate(model, cubePositions[index]);
-			float angle = 20.0f * index;
+			model = glm::translate(model, cubePositions[cubeIndex]);
+			float angle = 20.0f * cubeIndex;
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			cubeShaderProgram.SetMatrix4x4("model", model);
 			cubeShaderProgram.SetVector3("viewPosition", camera.myPosition);
 			cubeShaderProgram.SetInt("material.diffuse", 0);
 			cubeShaderProgram.SetInt("material.specular", 1);
 			cubeShaderProgram.SetFloat("material.shininess", 32.0f);
-			cubeShaderProgram.SetVector3("light.position", lightPosition);
-			cubeShaderProgram.SetVector3("light.direction", camera.myForward);
-			cubeShaderProgram.SetFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
-			cubeShaderProgram.SetFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
-			cubeShaderProgram.SetFloat("light.constant", 1.0f);
-			cubeShaderProgram.SetFloat("light.linear", 0.09f);
-			cubeShaderProgram.SetFloat("light.quadratic", 0.032f);
-			cubeShaderProgram.SetVector3("light.ambient", glm::vec3(0.1f));
-			cubeShaderProgram.SetVector3("light.diffuse", glm::vec3(0.8f));
-			cubeShaderProgram.SetVector3("light.specular", glm::vec3(1.0f));
+
+			cubeShaderProgram.SetVector3("directionalLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+			cubeShaderProgram.SetVector3("directionalLight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+			cubeShaderProgram.SetVector3("directionalLight.diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
+			cubeShaderProgram.SetVector3("directionalLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+
+			for (int pointLightIndex = 0; pointLightIndex < 4; pointLightIndex++)
+			{
+				const std::string index = std::to_string(pointLightIndex);
+				cubeShaderProgram.SetVector3("pointLights[" + index + "].position", pointLightPositions[pointLightIndex]);
+				cubeShaderProgram.SetVector3("pointLights[" + index + "].ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+				cubeShaderProgram.SetVector3("pointLights[" + index + "].diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+				cubeShaderProgram.SetVector3("pointLights[" + index + "].specular", glm::vec3(1.0f, 1.0f, 1.0f));
+				cubeShaderProgram.SetFloat("pointLights[" + index + "].constant", 1.0f);
+				cubeShaderProgram.SetFloat("pointLights[" + index + "].linear", 0.09f);
+				cubeShaderProgram.SetFloat("pointLights[" + index + "].quadratic", 0.032f);
+			}
+
+			cubeShaderProgram.SetVector3("spotLight.position", camera.myPosition);
+			cubeShaderProgram.SetVector3("spotLight.direction", camera.myForward);
+			cubeShaderProgram.SetVector3("spotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
+			cubeShaderProgram.SetVector3("spotLight.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+			cubeShaderProgram.SetVector3("spotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+			cubeShaderProgram.SetFloat("spotLight.constant", 1.0f);
+			cubeShaderProgram.SetFloat("spotLight.linear", 0.09f);
+			cubeShaderProgram.SetFloat("spotLight.quadratic", 0.032f);
+			cubeShaderProgram.SetFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+			cubeShaderProgram.SetFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, diffuseMap.GetID());
@@ -358,13 +379,17 @@ int main()
 		lampShaderProgram.Use();
 		lampShaderProgram.SetMatrix4x4("projection", camera.myProjection);
 		lampShaderProgram.SetMatrix4x4("view", camera.GetViewMatrix());
-		glm::mat4 model(1.0f);
-		model = glm::translate(model, lightPosition);
-		model = glm::scale(model, glm::vec3(0.2f));
-		lampShaderProgram.SetMatrix4x4("model", model);
 
-		glBindVertexArray(lampVAO);
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
+		for (int lampIndex = 0; lampIndex < 4; lampIndex++)
+		{
+			glm::mat4 model(1.0f);
+			model = glm::translate(model, pointLightPositions[lampIndex]);
+			model = glm::scale(model, glm::vec3(0.2f));
+			lampShaderProgram.SetMatrix4x4("model", model);
+
+			glBindVertexArray(lampVAO);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
+		}
 
         glfwSwapBuffers(window);
         glfwPollEvents();
