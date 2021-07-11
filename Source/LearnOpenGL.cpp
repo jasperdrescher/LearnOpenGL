@@ -209,7 +209,9 @@ int main()
 	glDebugMessageCallback(GlErrorCallback, nullptr);
 
 	glEnable(GL_DEPTH_TEST);
-    glViewport(0, 0, 800, 600);
+	glDepthFunc(GL_ALWAYS);
+
+	glViewport(0, 0, 800, 600);
 
     glfwSetFramebufferSizeCallback(window, FrameBufferSizeCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -219,7 +221,7 @@ int main()
 	const std::string shadersFolder = "Data/Shaders/";
 
 	ShaderProgram cubeShaderProgram;
-	cubeShaderProgram.Create(shadersFolder + "MultipleLights.vert.glsl", shadersFolder + "MultipleLights.frag.glsl");
+	cubeShaderProgram.Create(shadersFolder + "Depth.vert.glsl", shadersFolder + "Depth.frag.glsl");
 
 	MeshManager meshManager;
 	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/Cube.obj");
