@@ -82,7 +82,7 @@ int main()
 	glDebugMessageCallback(GlErrorCallback, nullptr);
 
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_ALWAYS);
+	glDepthFunc(GL_LESS);
 
 	glViewport(0, 0, 800, 600);
 
