@@ -1,1 +1,0 @@
-start Generated/LearnOpenGL.sln
