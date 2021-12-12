@@ -11,9 +11,7 @@ Texture::Texture()
 	, myWidth(0)
 	, myHeight(0)
 	, myComponents(0)
-{
-
-}
+{}
 
 void Texture::Create(const std::string& aFilePath)
 {

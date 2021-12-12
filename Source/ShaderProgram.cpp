@@ -9,9 +9,7 @@
 
 ShaderProgram::ShaderProgram()
 	: myID(0)
-{
-
-}
+{}
 
 void ShaderProgram::Create(const std::string& aVertexShaderFilePath, const std::string& aFragmentShaderFilePath)
 {

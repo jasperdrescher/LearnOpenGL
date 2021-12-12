@@ -13,9 +13,7 @@ Camera::Camera()
 	, myYaw(-90.0f)
 	, myPitch(0.0f)
 	, mySpeed(2.5f)
-{
-
-}
+{}
 
 glm::mat4x4 Camera::GetViewMatrix() const
 {

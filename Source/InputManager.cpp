@@ -9,9 +9,7 @@ InputManager::InputManager()
 	, myLastX(800.0f / 2.0)
 	, myLastY(600.0f / 2.0)
 	, myIsFirstCursor(true)
-{
-
-}
+{}
 
 void InputManager::AssignCamera(Camera* aCamera)
 {

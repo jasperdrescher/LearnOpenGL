@@ -1,14 +1,14 @@
 #include "Camera.h"
+#include "GlError.h"
 #include "InputManager.h"
 #include "MeshManager.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
-#include "GlError.h"
 
 #include <GLFW/glfw3.h>
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <filesystem>
 
 void FrameBufferSizeCallback(GLFWwindow* /*aWindow*/, int aWidth, int aHeight)
 {
