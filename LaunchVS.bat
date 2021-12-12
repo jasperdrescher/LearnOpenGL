@@ -1,1 +1,1 @@
-start Generated/Simpleton.sln
+start Generated/LearnOpenGL.sln
