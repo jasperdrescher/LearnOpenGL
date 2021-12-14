@@ -21,7 +21,6 @@ void Window::CreateWindow()
 
 	if (!glfwInit())
 	{
-		printf("Failed to initialize GLFW\n");
 		glfwTerminate();
 		throw std::runtime_error("Failed to initialize GLFW");
 	}
@@ -35,7 +34,6 @@ void Window::CreateWindow()
 	myWindow = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
 	if (!myWindow)
 	{
-		printf("Failed to create a GLFW window\n");
 		glfwTerminate();
 		throw std::runtime_error("Failed to create a GLFW window");
 	}
