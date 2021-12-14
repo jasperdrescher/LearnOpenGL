@@ -1,74 +1,32 @@
+#include "App.h"
 #include "Camera.h"
 #include "GlError.h"
+#include "GlfwCallback.h"
 #include "InputManager.h"
 #include "MeshManager.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
+#include "Window.h"
 
 #include <GLFW/glfw3.h>
 #include <filesystem>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-void FrameBufferSizeCallback(GLFWwindow* /*aWindow*/, int aWidth, int aHeight)
-{
-    glViewport(0, 0, aWidth, aHeight);
-}
-
-void CursorCallback(GLFWwindow* /*aWindow*/, double aX, double aY)
-{
-	InputManager::GetInstance().OnCursorAction(aX, aY);
-}
-
-void ScrollCallback(GLFWwindow* /*aWindow*/, double aXOffset, double aYOffset)
-{
-	InputManager::GetInstance().OnScrollAction(aXOffset, aYOffset);
-}
-
-void ProcessInput(GLFWwindow* aWindow, Camera& aCamera, const float aDeltaTime)
-{
-    if (glfwGetKey(aWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(aWindow, true);
-	if (glfwGetKey(aWindow, GLFW_KEY_1) == GLFW_PRESS)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	if (glfwGetKey(aWindow, GLFW_KEY_2) == GLFW_PRESS)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	if (glfwGetKey(aWindow, GLFW_KEY_W) == GLFW_PRESS)
-		aCamera.myPosition += (aCamera.mySpeed * aDeltaTime) * aCamera.myForward;
-	if (glfwGetKey(aWindow, GLFW_KEY_S) == GLFW_PRESS)
-		aCamera.myPosition -= (aCamera.mySpeed * aDeltaTime) * aCamera.myForward;
-	if (glfwGetKey(aWindow, GLFW_KEY_A) == GLFW_PRESS)
-		aCamera.myPosition -= glm::normalize(glm::cross(aCamera.myForward, aCamera.myUp)) * (aCamera.mySpeed * aDeltaTime);
-	if (glfwGetKey(aWindow, GLFW_KEY_D) == GLFW_PRESS)
-		aCamera.myPosition += glm::normalize(glm::cross(aCamera.myForward, aCamera.myUp)) * (aCamera.mySpeed * aDeltaTime);
-}
-
 int main()
 {
-    glfwSetErrorCallback(GlfwErrorCallback);
+	App& app = App::GetInstance();
+	app.Initialize();
 
-    if (!glfwInit())
-    {
-        printf("Failed to initialize GLFW\n");
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
-    if (!window)
-    {
-		printf("Failed to create a GLFW window\n");
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
+	try
+	{
+		app.GetWindow().CreateWindow();
+	}
+	catch (const std::runtime_error& aError)
+	{
+		printf(aError.what());
+		return -1;
+	}
 
     if (!gladLoadGL())
     {
@@ -79,24 +37,22 @@ int main()
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE);
-	glDebugMessageCallback(GlErrorCallback, nullptr);
+	glDebugMessageCallback(GlError::GlErrorCallback, nullptr);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
 	glViewport(0, 0, 800, 600);
 
-    glfwSetFramebufferSizeCallback(window, FrameBufferSizeCallback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, CursorCallback);
-	glfwSetScrollCallback(window, ScrollCallback);
-
 	const std::filesystem::path path = std::filesystem::current_path();
 	printf("Current path: %s\n", path.string().c_str());
 	const std::string shadersFolder = "Data/Shaders/";
 
+	ShaderProgram lightingShaderProgram;
+	lightingShaderProgram.Create(shadersFolder + "LightingCasters.vert.glsl", shadersFolder + "LightingCasters.frag.glsl");
+
 	ShaderProgram cubeShaderProgram;
-	cubeShaderProgram.Create(shadersFolder + "Depth.vert.glsl", shadersFolder + "Depth.frag.glsl");
+	cubeShaderProgram.Create(shadersFolder + "FullFragColor.vert.glsl", shadersFolder + "FullFragColor.frag.glsl");
 
 	MeshManager meshManager;
 	Mesh* coloredCubeMesh = meshManager.LoadObj("Data/Cube.obj");
@@ -151,10 +107,7 @@ int main()
 	ShaderProgram lampShaderProgram;
 	lampShaderProgram.Create(shadersFolder + "Lamp.vert.glsl", shadersFolder + "Lamp.frag.glsl");
 
-	CheckGlError(window);
-
-	Camera camera;
-	InputManager::GetInstance().AssignCamera(&camera);
+	GlError::CheckGlError();
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
@@ -184,16 +137,18 @@ int main()
 
 	const float lightingDistance = 2.0f;
 
+	Camera& camera = app.GetCamera();
+
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 
-    while (!glfwWindowShouldClose(window))
+    while (!app.GetWindow().ShouldWindowClose())
     {
 		const float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-        ProcessInput(window, camera, deltaTime);
+		app.Update(deltaTime);
 
 		camera.myProjection = glm::perspective(glm::radians(camera.myFoV), 800.0f / 600.0f, 0.1f, 100.0f);
 
@@ -268,10 +223,9 @@ int main()
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeMesh->myIndices.size()), GL_UNSIGNED_INT, static_cast<void*>(0));
 		}
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+		app.GetWindow().SwapBuffers();
 
-		CheckGlError(window);
+		GlError::CheckGlError();
     }
 
 	glDeleteVertexArrays(1, &coloredCubeVAO);
