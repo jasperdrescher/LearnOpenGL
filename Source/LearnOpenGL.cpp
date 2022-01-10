@@ -157,8 +157,8 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
 
-    unsigned int diffuseMap = LoadTexture(FileSystem::getPath("Data/Textures/Container2.png").c_str());
-    unsigned int specularMap = LoadTexture(FileSystem::getPath("Data/Textures/Container2_specular.png").c_str());
+    const unsigned int diffuseMap = LoadTexture(FileSystem::getPath("Data/Textures/Container2.png").c_str());
+    const unsigned int specularMap = LoadTexture(FileSystem::getPath("Data/Textures/Container2_specular.png").c_str());
 
     lightingShader.use();
     lightingShader.setInt("material.diffuse", 0);
@@ -197,14 +197,14 @@ int main()
         lightingShader.setFloat("material.shininess", 32.0f);
 
         // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT), 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
+        const glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT), 0.1f, 100.0f);
+        const glm::mat4 view = camera.GetViewMatrix();
         lightingShader.setMat4("projection", projection);
         lightingShader.setMat4("view", view);
 
         // world transformation
-        glm::mat4 lightModelMatrix = glm::mat4(1.0f);
-        lightingShader.setMat4("model", lightModelMatrix);
+        const glm::mat4 lightingModelMatrix = glm::mat4(1.0f);
+        lightingShader.setMat4("model", lightingModelMatrix);
 
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
