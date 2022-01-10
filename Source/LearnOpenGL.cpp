@@ -69,7 +69,7 @@ int main()
     glEnable(GL_DEPTH_TEST);
     
     Shader lightingShader(FileSystem::getPath("Data/Shaders/5_4_light_casters.vert.glsl").c_str(), FileSystem::getPath("Data/Shaders/5_4_light_casters.frag.glsl").c_str());
-    Shader lightCubeShader(FileSystem::getPath("Data/Shaders/5_4_light_cube.vert.glsl").c_str(), FileSystem::getPath("Data/Shaders/5_4_light_cube.frag.glsl").c_str());
+    //Shader lightCubeShader(FileSystem::getPath("Data/Shaders/5_4_light_cube.vert.glsl").c_str(), FileSystem::getPath("Data/Shaders/5_4_light_cube.frag.glsl").c_str());
     
     constexpr float vertices[] =
     {
@@ -140,7 +140,7 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glBindVertexArray(cubeVAO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
@@ -154,7 +154,7 @@ int main()
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     // note that we update the lamp's position attribute's stride to reflect the updated buffer data
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
 
     unsigned int diffuseMap = LoadTexture(FileSystem::getPath("Data/Textures/Container2.png").c_str());
@@ -203,8 +203,8 @@ int main()
         lightingShader.setMat4("view", view);
 
         // world transformation
-        glm::mat4 model = glm::mat4(1.0f);
-        lightingShader.setMat4("model", model);
+        glm::mat4 lightModelMatrix = glm::mat4(1.0f);
+        lightingShader.setMat4("model", lightModelMatrix);
 
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
@@ -218,11 +218,11 @@ int main()
         for (unsigned int i = 0; i < 10; i++)
         {
             // calculate the model matrix for each object and pass it to shader before drawing
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            lightingShader.setMat4("model", model);
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
+            modelMatrix = glm::translate(modelMatrix, cubePositions[i]);
+            const float angle = 20.0f * static_cast<float>(i);
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            lightingShader.setMat4("model", modelMatrix);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
