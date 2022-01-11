@@ -131,28 +131,28 @@ int main()
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
-    // first, configure the cube's VAO (and VBO)
-    unsigned int VBO, cubeVAO;
-    glGenVertexArrays(1, &cubeVAO);
-    glGenBuffers(1, &VBO);
+    // first, configure the cube's VAO (and vertexBufferObject)
+    unsigned int vertexBufferObject, cubeVertexArrayObject;
+    glGenVertexArrays(1, &cubeVertexArrayObject);
+    glGenBuffers(1, &vertexBufferObject);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindVertexArray(cubeVAO);
+    glBindVertexArray(cubeVertexArrayObject);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    // second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
-    unsigned int lightCubeVAO;
-    glGenVertexArrays(1, &lightCubeVAO);
-    glBindVertexArray(lightCubeVAO);
+    // second, configure the light's VAO (vertexBufferObject stays the same; the vertices are the same for the light object which is also a 3D cube)
+    unsigned int lightcubeVertexArrayObject;
+    glGenVertexArrays(1, &lightcubeVertexArrayObject);
+    glBindVertexArray(lightcubeVertexArrayObject);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
     // note that we update the lamp's position attribute's stride to reflect the updated buffer data
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
@@ -214,7 +214,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
         // render containers
-        glBindVertexArray(cubeVAO);
+        glBindVertexArray(cubeVertexArrayObject);
         for (unsigned int i = 0; i < 10; i++)
         {
             // calculate the model matrix for each object and pass it to shader before drawing
@@ -231,9 +231,9 @@ int main()
         glfwPollEvents();
     }
     
-    glDeleteVertexArrays(1, &cubeVAO);
-    glDeleteVertexArrays(1, &lightCubeVAO);
-    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &cubeVertexArrayObject);
+    glDeleteVertexArrays(1, &lightcubeVertexArrayObject);
+    glDeleteBuffers(1, &vertexBufferObject);
     
     glfwTerminate();
 
@@ -294,11 +294,11 @@ unsigned int LoadTexture(char const* aFilepath)
 
     int width = 0;
     int height = 0;
-	int numberOfComponents = 0;
-    if (unsigned char* data = stbi_load(aFilepath, &width, &height, &numberOfComponents, 0))
+	int channels = 0;
+    if (unsigned char* data = stbi_load(aFilepath, &width, &height, &channels, 0))
     {
         GLenum format = GL_RED;
-	    switch (numberOfComponents)
+	    switch (channels)
 	    {
             case 1:
             {
@@ -315,10 +315,15 @@ unsigned int LoadTexture(char const* aFilepath)
                 format = GL_RGBA;
                 break;
             }
+			default:
+            {
+	            std::cout << "Failed to map the right number of channels: " << channels << std::endl;
+                break;
+            }
 	    }
 
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
