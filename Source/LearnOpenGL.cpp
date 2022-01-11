@@ -45,7 +45,7 @@ int main()
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-    
+
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "LearnOpenGL", nullptr, nullptr);
     if (!window)
     {
@@ -65,15 +65,15 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    
+
     glEnable(GL_DEPTH_TEST);
-    
+
     Shader lightingShader;
-	lightingShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/5_4_light_casters.frag.glsl");
-    
+    lightingShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/5_4_light_casters.frag.glsl");
+
     constexpr float vertices[] =
     {
-        // positions          // normals           // texture coords
+        // positions          // normals           // texture coordinates
         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
          0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
          0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
@@ -230,11 +230,11 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    
+
     glDeleteVertexArrays(1, &cubeVertexArrayObject);
     glDeleteVertexArrays(1, &lightcubeVertexArrayObject);
     glDeleteBuffers(1, &vertexBufferObject);
-    
+
     glfwTerminate();
 
     return 0;
@@ -256,8 +256,6 @@ void ProcessInput(GLFWwindow* aWindow)
 
 void FrameBufferSizeCallback(GLFWwindow* aWindow, int aWidth, int aHeight)
 {
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, aWidth, aHeight);
 }
 
@@ -294,50 +292,51 @@ unsigned int LoadTexture(char const* aFilepath)
 
     int width = 0;
     int height = 0;
-	int channels = 0;
-    if (unsigned char* data = stbi_load(aFilepath, &width, &height, &channels, 0))
-    {
-        GLenum format = GL_RED;
-	    switch (channels)
-	    {
-            case 1:
-            {
-                format = GL_RED;
-                break;
-            }
-            case 3:
-            {
-                format = GL_RGB;
-                break;
-            }
-            case 4:
-            {
-                format = GL_RGBA;
-                break;
-            }
-			default:
-            {
-	            std::cout << "Failed to map the right number of channels: " << channels << std::endl;
-                break;
-            }
-	    }
-
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(data);
-    }
-    else
+    int channels = 0;
+    unsigned char* data = stbi_load(aFilepath, &width, &height, &channels, 0);
+    if (!data)
     {
         std::cout << "Texture failed to load at path: " << aFilepath << std::endl;
         stbi_image_free(data);
+
+        return textureID;
     }
+
+    GLenum format = GL_RED;
+    switch (channels)
+    {
+        case 1:
+        {
+            format = GL_RED;
+            break;
+        }
+        case 3:
+        {
+            format = GL_RGB;
+            break;
+        }
+        case 4:
+        {
+            format = GL_RGBA;
+            break;
+        }
+        default:
+        {
+            std::cout << "Failed to map the right number of channels: " << channels << std::endl;
+            break;
+        }
+    }
+
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_image_free(data);
 
     return textureID;
 }
