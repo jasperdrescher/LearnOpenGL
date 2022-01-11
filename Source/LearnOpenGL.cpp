@@ -54,6 +54,7 @@ int main()
         glfwTerminate();
         return -1;
     }
+
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, FrameBufferSizeCallback);
     glfwSetCursorPosCallback(window, CursorCallback);
@@ -69,7 +70,6 @@ int main()
     glEnable(GL_DEPTH_TEST);
     
     Shader lightingShader(FileSystem::getPath("Data/Shaders/5_4_light_casters.vert.glsl").c_str(), FileSystem::getPath("Data/Shaders/5_4_light_casters.frag.glsl").c_str());
-    //Shader lightCubeShader(FileSystem::getPath("Data/Shaders/5_4_light_cube.vert.glsl").c_str(), FileSystem::getPath("Data/Shaders/5_4_light_cube.frag.glsl").c_str());
     
     constexpr float vertices[] =
     {
@@ -161,8 +161,8 @@ int main()
     const unsigned int specularMap = LoadTexture(FileSystem::getPath("Data/Textures/Container2_specular.png").c_str());
 
     lightingShader.use();
-    lightingShader.setInt("material.diffuse", 0);
-    lightingShader.setInt("material.specular", 1);
+    lightingShader.setInt("material.myDiffuse", 0);
+    lightingShader.setInt("material.mySpecular", 1);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -177,24 +177,24 @@ int main()
 
         // be sure to activate shader when setting uniforms/drawing objects
         lightingShader.use();
-        lightingShader.setVec3("light.position", camera.Position);
-        lightingShader.setVec3("light.direction", camera.Front);
-        lightingShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
-        lightingShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
-        lightingShader.setVec3("viewPos", camera.Position);
+        lightingShader.setVec3("light.myPosition", camera.Position);
+        lightingShader.setVec3("light.myDirection", camera.Front);
+        lightingShader.setFloat("light.myCutOff", glm::cos(glm::radians(12.5f)));
+        lightingShader.setFloat("light.myOuterCutOff", glm::cos(glm::radians(17.5f)));
+        lightingShader.setVec3("viewPosition", camera.Position);
 
         // light properties
-        lightingShader.setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+        lightingShader.setVec3("light.myAmbient", 0.1f, 0.1f, 0.1f);
         // we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
         // each environment and lighting type requires some tweaking to get the best out of your environment.
-        lightingShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
-        lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-        lightingShader.setFloat("light.constant", 1.0f);
-        lightingShader.setFloat("light.linear", 0.09f);
-        lightingShader.setFloat("light.quadratic", 0.032f);
+        lightingShader.setVec3("light.myDiffuse", 0.8f, 0.8f, 0.8f);
+        lightingShader.setVec3("light.mySpecular", 1.0f, 1.0f, 1.0f);
+        lightingShader.setFloat("light.myConstant", 1.0f);
+        lightingShader.setFloat("light.myLinear", 0.09f);
+        lightingShader.setFloat("light.myQuadratic", 0.032f);
 
         // material properties
-        lightingShader.setFloat("material.shininess", 32.0f);
+        lightingShader.setFloat("material.myShininess", 32.0f);
 
         // view/projection transformations
         const glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT), 0.1f, 100.0f);
@@ -226,18 +226,6 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-
-        // again, a lamp object is weird when we only have a spot light, don't render the light object
-        // lightCubeShader.use();
-        // lightCubeShader.setMat4("projection", projection);
-        // lightCubeShader.setMat4("view", view);
-        // model = glm::mat4(1.0f);
-        // model = glm::translate(model, lightPos);
-        // model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-        // lightCubeShader.setMat4("model", model);
-
-        // glBindVertexArray(lightCubeVAO);
-        // glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
