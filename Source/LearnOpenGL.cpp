@@ -69,7 +69,10 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     Shader lightingShader;
-    lightingShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/5_4_light_casters.frag.glsl");
+    lightingShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/6_multiple_lights.frag.glsl");
+
+    Shader lightCubeShader;
+    lightCubeShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/5_4_light_casters.frag.glsl");
 
     constexpr float vertices[] =
     {
@@ -131,6 +134,21 @@ int main()
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
+    constexpr glm::vec3 pointLightPositions[] =
+    {
+        glm::vec3(0.7f,  0.2f,  2.0f),
+        glm::vec3(2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f),
+        glm::vec3(0.0f,  0.0f, -3.0f)
+    };
+
+    constexpr glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
+    constexpr glm::vec3 green = glm::vec3(0.0f, 1.0f, 0.0f);
+    constexpr glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
+    constexpr glm::vec3 yellow = glm::vec3(1.0f, 1.0f, 0.0f);
+
+    constexpr glm::vec3 pointLightColors[] = {red, green, blue, yellow};
+
     // first, configure the cube's VAO (and vertexBufferObject)
     unsigned int vertexBufferObject, cubeVertexArrayObject;
     glGenVertexArrays(1, &cubeVertexArrayObject);
@@ -148,9 +166,9 @@ int main()
     glEnableVertexAttribArray(2);
 
     // second, configure the light's VAO (vertexBufferObject stays the same; the vertices are the same for the light object which is also a 3D cube)
-    unsigned int lightcubeVertexArrayObject;
-    glGenVertexArrays(1, &lightcubeVertexArrayObject);
-    glBindVertexArray(lightcubeVertexArrayObject);
+    unsigned int lightCubeVertexArrayObject;
+    glGenVertexArrays(1, &lightCubeVertexArrayObject);
+    glBindVertexArray(lightCubeVertexArrayObject);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
     // note that we update the lamp's position attribute's stride to reflect the updated buffer data
@@ -177,24 +195,37 @@ int main()
 
         // be sure to activate shader when setting uniforms/drawing objects
         lightingShader.Use();
-        lightingShader.SetVec3("light.myPosition", camera.myPosition);
-        lightingShader.SetVec3("light.myDirection", camera.myFront);
-        lightingShader.SetFloat("light.myCutOff", glm::cos(glm::radians(12.5f)));
-        lightingShader.SetFloat("light.myOuterCutOff", glm::cos(glm::radians(17.5f)));
         lightingShader.SetVec3("viewPosition", camera.myPosition);
-
-        // light properties
-        lightingShader.SetVec3("light.myAmbient", 0.1f, 0.1f, 0.1f);
-        // we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
-        // each environment and lighting type requires some tweaking to get the best out of your environment.
-        lightingShader.SetVec3("light.myDiffuse", 0.8f, 0.8f, 0.8f);
-        lightingShader.SetVec3("light.mySpecular", 1.0f, 1.0f, 1.0f);
-        lightingShader.SetFloat("light.myConstant", 1.0f);
-        lightingShader.SetFloat("light.myLinear", 0.09f);
-        lightingShader.SetFloat("light.myQuadratic", 0.032f);
-
-        // material properties
         lightingShader.SetFloat("material.myShininess", 32.0f);
+
+        lightingShader.SetVec3("directionalLight.myDirection", glm::vec3(-0.2f, -1.0f, -0.3f));
+        lightingShader.SetVec3("directionalLight.myAmbient", glm::vec3(0.05f, 0.05f, 0.05f));
+        lightingShader.SetVec3("directionalLight.myDiffuse", glm::vec3(0.4f, 0.4f, 0.4f));
+        lightingShader.SetVec3("directionalLight.mySpecular", glm::vec3(0.5f, 0.5f, 0.5f));
+
+        for (unsigned int i = 0; i < 4; i++)
+        {
+            const std::string index = std::to_string(i);
+            lightingShader.SetVec3("pointLights[" + index + "].myPosition", pointLightPositions[i]);
+            lightingShader.SetVec3("pointLights[" + index + "].myAmbient", pointLightColors[i] * 0.1f);
+            lightingShader.SetVec3("pointLights[" + index + "].myDiffuse", pointLightColors[i]);
+            lightingShader.SetVec3("pointLights[" + index + "].mySpecular", glm::vec3(1.0f));
+            lightingShader.SetFloat("pointLights[" + index + "].myConstant", 1.0f);
+            lightingShader.SetFloat("pointLights[" + index + "].myLinear", 0.09f);
+            lightingShader.SetFloat("pointLights[" + index + "].myQuadratic", 0.032f);
+        }
+
+        lightingShader.SetVec3("spotLight.myPosition", camera.myPosition);
+        lightingShader.SetVec3("spotLight.myDirection", camera.myFront);
+
+        lightingShader.SetVec3("spotLight.myAmbient", glm::vec3(0.0f));
+        lightingShader.SetVec3("spotLight.myDiffuse", glm::vec3(1.0f));
+        lightingShader.SetVec3("spotLight.mySpecular", glm::vec3(1.0f));
+        lightingShader.SetFloat("spotLight.myConstant", 1.0f);
+        lightingShader.SetFloat("spotLight.myLinear", 0.09f);
+        lightingShader.SetFloat("spotLight.myQuadratic", 0.032f);
+        lightingShader.SetFloat("spotLight.myCutOff", glm::cos(glm::radians(12.5f)));
+        lightingShader.SetFloat("spotLight.myOuterCutOff", glm::cos(glm::radians(15.0f)));
 
         // view/projection transformations
         const glm::mat4 projection = glm::perspective(glm::radians(camera.myZoom), static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT), 0.1f, 100.0f);
@@ -227,12 +258,28 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
+        lightCubeShader.Use();
+        lightCubeShader.SetMat4("projection", projection);
+        lightCubeShader.SetMat4("view", view);
+
+        // we now draw as many light bulbs as we have point lights.
+        glBindVertexArray(lightCubeVertexArrayObject);
+        for (unsigned int i = 0; i < 4; i++)
+        {
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
+            modelMatrix = glm::translate(modelMatrix, pointLightPositions[i]);
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f)); // Make it a smaller cube
+            lightCubeShader.SetMat4("model", modelMatrix);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     glDeleteVertexArrays(1, &cubeVertexArrayObject);
-    glDeleteVertexArrays(1, &lightcubeVertexArrayObject);
+    glDeleteVertexArrays(1, &lightCubeVertexArrayObject);
     glDeleteBuffers(1, &vertexBufferObject);
 
     glfwTerminate();
