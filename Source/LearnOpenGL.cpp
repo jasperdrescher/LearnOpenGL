@@ -67,6 +67,7 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     Shader lightingShader;
     lightingShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/6_multiple_lights.frag.glsl");
