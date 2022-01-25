@@ -1,16 +1,20 @@
 #include "Camera.h"
 #include "Shader.h"
+#include "Model.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/hash.hpp>
 
 #include <iostream>
+#include <unordered_map>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -19,7 +23,7 @@ static void FrameBufferSizeCallback(GLFWwindow* aWindow, int aWidth, int aHeight
 static void CursorCallback(GLFWwindow* aWindow, double aXPosition, double aYPosition);
 static void ScrollCallback(GLFWwindow* aWindow, double aXOffset, double aYOffset);
 static void ProcessInput(GLFWwindow* aWindow);
-static unsigned int LoadTexture(const char* aFilepath);
+unsigned int LoadTexture(const std::string& aFilepath);
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = WINDOW_WIDTH / 2.0f;
@@ -28,6 +32,47 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+constexpr glm::vec3 cubePositions[] =
+{
+    glm::vec3(0.0f, 0.0f, 0.0f),
+    glm::vec3(2.0f, 5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3(2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f, 3.0f, -7.5f),
+    glm::vec3(1.3f, -2.0f, -2.5f),
+    glm::vec3(1.5f, 2.0f, -2.5f),
+    glm::vec3(1.5f, 0.2f, -1.5f),
+    glm::vec3(-1.3f, 1.0f, -1.5f)
+};
+
+constexpr glm::vec3 pointLightPositions[] =
+{
+    glm::vec3(0.7f, 0.2f, 2.0f),
+    glm::vec3(2.3f, -3.3f, -4.0f),
+    glm::vec3(-4.0f, 2.0f, -12.0f),
+    glm::vec3(0.0f, 0.0f, -3.0f)
+};
+
+std::string GetNameFromPath(const std::string& aPath)
+{
+    const std::size_t nameStartIndex = aPath.find_last_of("/\\") + 1;
+    const std::size_t extensionStartIndex = aPath.find_last_of(".");
+    return aPath.substr(nameStartIndex, aPath.length() - nameStartIndex - (aPath.length() - extensionStartIndex));
+}
+
+std::string GetExtensionFromPath(const std::string& aPath)
+{
+    const std::size_t extensionStartIndex = aPath.find_last_of(".") + 1;
+    return aPath.substr(extensionStartIndex, aPath.length() - extensionStartIndex);
+}
+
+std::string GetDirectoryFromPath(const std::string& aPath)
+{
+   const std::size_t lastSlashIndex = aPath.find_last_of("/\\");
+    return aPath.substr(0, lastSlashIndex + 1);
+}
 
 int main()
 {
@@ -69,79 +114,115 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     Shader lightingShader;
     lightingShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/6_multiple_lights.frag.glsl");
 
     Shader lightCubeShader;
     lightCubeShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/5_4_light_casters.frag.glsl");
 
-    constexpr float vertices[] =
+    const std::string path = "E:/Workspace/Repositories/LearnOpenGL/Data/Models/MagicCube/MagicCube.obj";
+    tinyobj::attrib_t attributes;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warning;
+    std::string error;
+    const std::string& fileName = GetNameFromPath(path);
+    const std::string& directory = GetDirectoryFromPath(path);
+    const std::string& fileExtension = GetExtensionFromPath(path);
+    if (!tinyobj::LoadObj(&attributes, &shapes, &materials, &warning, &error, path.c_str(), directory.c_str(), true))
+        return -1;
+
+    std::cout << "vertices: " << attributes.vertices.size() << std::endl;
+    std::cout << "colors: " << attributes.colors.size() << std::endl;
+    std::cout << "normals: " << attributes.normals.size() << std::endl;
+    std::cout << "texcoords: " << attributes.texcoords.size() << std::endl;
+
+    std::cout << "Shapes: " << shapes.size() << std::endl;
+    for (const tinyobj::shape_t& shape : shapes)
     {
-        // positions          // normals           // texture coordinates
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+        std::cout << "name: " << shape.name << std::endl;
+        std::cout << "indices: " << shape.mesh.indices.size() << std::endl;
+        std::cout << "material_ids: " << shape.mesh.material_ids.size() << std::endl;
+        std::cout << "num_face_vertices: " << shape.mesh.num_face_vertices.size() << std::endl;
+    }
 
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
-    };
-
-    constexpr glm::vec3 cubePositions[] =
+    std::cout << "Materials: " << materials.size() << std::endl;
+    for (const tinyobj::material_t& material : materials)
     {
-        glm::vec3(0.0f,  0.0f,  0.0f),
-        glm::vec3(2.0f,  5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f,  3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f,  2.0f, -2.5f),
-        glm::vec3(1.5f,  0.2f, -1.5f),
-        glm::vec3(-1.3f,  1.0f, -1.5f)
-    };
+        std::cout << "diffuse_texname: " << material.diffuse_texname << std::endl;
+    }
 
-    constexpr glm::vec3 pointLightPositions[] =
+    Model model;
+    for (const tinyobj::shape_t& shape : shapes)
     {
-        glm::vec3(0.7f,  0.2f,  2.0f),
-        glm::vec3(2.3f, -3.3f, -4.0f),
-        glm::vec3(-4.0f,  2.0f, -12.0f),
-        glm::vec3(0.0f,  0.0f, -3.0f)
-    };
+        Mesh mesh;
+        std::unordered_map<glm::vec3, uint32_t> uniqueVertices;
+        for (const tinyobj::index_t& index : shape.mesh.indices)
+        {
+            Vertex vertex;
+            size_t vertexIndexStride = 3 * static_cast<size_t>(index.vertex_index);
+            vertex.myPosition.x = attributes.vertices[vertexIndexStride];
+            vertex.myPosition.y = attributes.vertices[vertexIndexStride + 1];
+            vertex.myPosition.z = attributes.vertices[vertexIndexStride + 2];
+
+            if (!attributes.normals.empty())
+            {
+                const size_t normalIndexStride = 3 * static_cast<size_t>(index.normal_index);
+                vertex.myNormal.x = attributes.normals[normalIndexStride];
+                vertex.myNormal.y = attributes.normals[normalIndexStride + 1];
+                vertex.myNormal.z = attributes.normals[normalIndexStride + 2];
+            }
+
+            if (!attributes.texcoords.empty())
+            {
+                const size_t textureCoordinatesIndexStride = 2 * static_cast<size_t>(index.texcoord_index);
+                vertex.myTextureCoordinates.x = attributes.texcoords[textureCoordinatesIndexStride];
+                vertex.myTextureCoordinates.y = attributes.texcoords[textureCoordinatesIndexStride + 1];
+            }
+
+            if (uniqueVertices.count(vertex.myPosition) == 0)
+            {
+                uniqueVertices[vertex.myPosition] = static_cast<uint32_t>(mesh.myVertices.size());
+                mesh.myVertices.push_back(vertex);
+            }
+
+            mesh.myIndices.push_back(uniqueVertices[vertex.myPosition]);
+        }
+
+        model.myMeshes.push_back(mesh);
+    }
+
+    std::map<std::string, GLuint> textures;
+    for (const tinyobj::material_t& material : materials)
+    {
+        if (!material.diffuse_texname.empty())
+        {
+            if (textures.find(material.diffuse_texname) == textures.end())
+            {
+                const unsigned int textureIdentifier = LoadTexture(directory + material.diffuse_texname);
+                textures.insert(std::make_pair(material.diffuse_texname, textureIdentifier));
+            }
+        }
+    }
+
+    for (const std::pair<std::string, GLuint> pair : textures)
+    {
+        Texture texture;
+        texture.myPath = pair.first;
+        texture.myIdentifier = pair.second;
+        texture.myType = "texture_diffuse";
+        model.myMeshes[0].myTextures.push_back(texture);
+    }
+
+    std::cout << "Textures: " << textures.size() << std::endl;
+    std::cout << "Meshes: " << model.myMeshes.size() << std::endl;
+    std::cout << "Indices: " << model.myMeshes[0].myIndices.size() << std::endl;
+    std::cout << "Vertices: " << model.myMeshes[0].myVertices.size() << std::endl;
 
     constexpr glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
     constexpr glm::vec3 green = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -151,20 +232,29 @@ int main()
     constexpr glm::vec3 pointLightColors[] = {red, green, blue, yellow};
 
     // first, configure the cube's VAO (and vertexBufferObject)
-    unsigned int vertexBufferObject, cubeVertexArrayObject;
-    glGenVertexArrays(1, &cubeVertexArrayObject);
-    glGenBuffers(1, &vertexBufferObject);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    for (Mesh& mesh : model.myMeshes)
+        mesh.SetupMesh();
 
+    unsigned int vertexBufferObject = model.myMeshes[0].myVertexBufferObject;
+
+   /* glGenVertexArrays(1, &cubeVertexArrayObject);
     glBindVertexArray(cubeVertexArrayObject);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(nullptr));
+    glGenBuffers(1, &vertexBufferObject);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+    glBufferData(GL_ARRAY_BUFFER, mesh.myVertices.size() * sizeof(Vertex), &mesh.myVertices.front(), GL_STATIC_DRAW);*/
+
+    /*glGenBuffers(1, &elementBufferObject);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.myIndices.size() * sizeof(unsigned int), &mesh.myIndices.front(), GL_STATIC_DRAW);*/
+
+    /*glBindVertexArray(cubeVertexArrayObject);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myPosition)));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myNormal)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myTextureCoordinates)));
+    glEnableVertexAttribArray(2);*/
 
     // second, configure the light's VAO (vertexBufferObject stays the same; the vertices are the same for the light object which is also a 3D cube)
     unsigned int lightCubeVertexArrayObject;
@@ -176,8 +266,8 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
 
-    const unsigned int diffuseMap = LoadTexture("Data/Textures/Container2.png");
-    const unsigned int specularMap = LoadTexture("Data/Textures/Container2_specular.png");
+    //const unsigned int diffuseMap = LoadTexture("Data/Textures/Container2.png");
+    //const unsigned int specularMap = LoadTexture("Data/Textures/Container2_specular.png");
 
     lightingShader.Use();
     lightingShader.SetInt("material.myDiffuse", 0);
@@ -235,29 +325,48 @@ int main()
         lightingShader.SetMat4("view", view);
 
         // world transformation
-        const glm::mat4 lightingModelMatrix = glm::mat4(1.0f);
-        lightingShader.SetMat4("model", lightingModelMatrix);
+        //const glm::mat4 lightingModelMatrix = glm::mat4(1.0f);
+        //lightingShader.SetMat4("model", lightingModelMatrix);
 
         // bind diffuse map
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, diffuseMap);
         // bind specular map
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, specularMap);
+        //glActiveTexture(GL_TEXTURE1);
+        //glBindTexture(GL_TEXTURE_2D, specularMap);
+
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        lightingShader.SetMat4("model", modelMatrix);
+        for (Mesh& mesh : model.myMeshes)
+            mesh.Draw(lightingShader);
 
         // render containers
-        glBindVertexArray(cubeVertexArrayObject);
-        for (unsigned int i = 0; i < 10; i++)
+        //glBindVertexArray(cubeVertexArrayObject);
+        /*for (const Mesh& mesh : model.myMeshes)
         {
-            // calculate the model matrix for each object and pass it to shader before drawing
             glm::mat4 modelMatrix = glm::mat4(1.0f);
-            modelMatrix = glm::translate(modelMatrix, cubePositions[i]);
-            const float angle = 20.0f * static_cast<float>(i);
+            modelMatrix = glm::translate(modelMatrix, cubePositions[0]);
+            constexpr float angle = 20.0f * static_cast<float>(1.0f);
             modelMatrix = glm::rotate(modelMatrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             lightingShader.SetMat4("model", modelMatrix);
-
             glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        }*/
+        //for (unsigned int i = 0; i < 10; i++)
+        //{
+        //    // calculate the model matrix for each object and pass it to shader before drawing
+        //    glm::mat4 modelMatrix = glm::mat4(1.0f);
+        //    modelMatrix = glm::translate(modelMatrix, cubePositions[i]);
+        //    const float angle = 20.0f * static_cast<float>(i);
+        //    modelMatrix = glm::rotate(modelMatrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+        //    lightingShader.SetMat4("model", modelMatrix);
+
+        //    glBindTexture(GL_TEXTURE_2D, mesh.myTextures[2].myIdentifier);
+        //      //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
+        //    //glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.myIndices.size()), GL_UNSIGNED_INT, nullptr);
+        //    glDrawArrays(GL_TRIANGLES, 0, 36);
+        //}
 
         lightCubeShader.Use();
         lightCubeShader.SetMat4("projection", projection);
@@ -267,10 +376,10 @@ int main()
         glBindVertexArray(lightCubeVertexArrayObject);
         for (unsigned int i = 0; i < 4; i++)
         {
-            glm::mat4 modelMatrix = glm::mat4(1.0f);
-            modelMatrix = glm::translate(modelMatrix, pointLightPositions[i]);
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f)); // Make it a smaller cube
-            lightCubeShader.SetMat4("model", modelMatrix);
+            glm::mat4 lightCubeModelMatrix = glm::mat4(1.0f);
+            lightCubeModelMatrix = glm::translate(lightCubeModelMatrix, pointLightPositions[i]);
+            lightCubeModelMatrix = glm::scale(lightCubeModelMatrix, glm::vec3(0.2f)); // Make it a smaller cube
+            lightCubeShader.SetMat4("model", lightCubeModelMatrix);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
@@ -279,7 +388,7 @@ int main()
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &cubeVertexArrayObject);
+    //glDeleteVertexArrays(1, &cubeVertexArrayObject);
     glDeleteVertexArrays(1, &lightCubeVertexArrayObject);
     glDeleteBuffers(1, &vertexBufferObject);
 
@@ -333,15 +442,15 @@ void ScrollCallback(GLFWwindow* /*aWindow*/, double /*aXOffset*/, double aYOffse
     camera.ProcessMouseScroll(static_cast<float>(aYOffset));
 }
 
-unsigned int LoadTexture(char const* aFilepath)
+unsigned int LoadTexture(const std::string& aFilepath)
 {
-    unsigned int textureID;
+    unsigned int textureID = 0;
     glGenTextures(1, &textureID);
 
     int width = 0;
     int height = 0;
     int channels = 0;
-    unsigned char* data = stbi_load(aFilepath, &width, &height, &channels, 0);
+    unsigned char* data = stbi_load(aFilepath.c_str(), &width, &height, &channels, 0);
     if (!data)
     {
         std::cout << "Texture failed to load at path: " << aFilepath << std::endl;
