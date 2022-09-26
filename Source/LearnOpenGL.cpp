@@ -125,7 +125,7 @@ int main()
     Shader lightCubeShader;
     lightCubeShader.Load("Data/Shaders/5_4_light_casters.vert.glsl", "Data/Shaders/5_4_light_casters.frag.glsl");
 
-    const std::string path = "E:/Workspace/Repositories/LearnOpenGL/Data/Models/MagicCube/MagicCube.obj";
+    const std::string path = "Data/Models/MagicCube/MagicCube.obj";
     tinyobj::attrib_t attributes;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
