@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <filesystem>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include <glm/glm.hpp>
@@ -13,11 +14,37 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/hash.hpp>
 
-#include <iostream>
 #include <unordered_map>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
+
+namespace Log
+{
+    void PrintMessage(const char* aMessageFormat...)
+    {
+        char buffer[256];
+        va_list arguments;
+        va_start(arguments, aMessageFormat);
+        const int length = std::vsnprintf(buffer, sizeof buffer, aMessageFormat, arguments);
+        va_end(arguments);
+
+        if (length > 0)
+            std::printf("[Debug] %s\n", buffer);
+    }
+
+    void PrintError(const char* aMessageFormat...)
+    {
+        char buffer[256];
+        va_list arguments;
+        va_start(arguments, aMessageFormat);
+        const int length = std::vsnprintf(buffer, sizeof buffer, aMessageFormat, arguments);
+        va_end(arguments);
+
+        if (length > 0)
+            std::printf("[Error] %s\n", buffer);
+    }
+}
 
 static void FrameBufferSizeCallback(GLFWwindow* aWindow, int aWidth, int aHeight);
 static void CursorCallback(GLFWwindow* aWindow, double aXPosition, double aYPosition);
@@ -58,13 +85,13 @@ constexpr glm::vec3 pointLightPositions[] =
 std::string GetNameFromPath(const std::string& aPath)
 {
     const std::size_t nameStartIndex = aPath.find_last_of("/\\") + 1;
-    const std::size_t extensionStartIndex = aPath.find_last_of(".");
+    const std::size_t extensionStartIndex = aPath.find_last_of('.');
     return aPath.substr(nameStartIndex, aPath.length() - nameStartIndex - (aPath.length() - extensionStartIndex));
 }
 
 std::string GetExtensionFromPath(const std::string& aPath)
 {
-    const std::size_t extensionStartIndex = aPath.find_last_of(".") + 1;
+    const std::size_t extensionStartIndex = aPath.find_last_of('.') + 1;
     return aPath.substr(extensionStartIndex, aPath.length() - extensionStartIndex);
 }
 
@@ -76,9 +103,17 @@ std::string GetDirectoryFromPath(const std::string& aPath)
 
 int main()
 {
+#if _WIN32
+    const char* bit = "32";
+#elif _WIN64
+    const char* bit = "64";
+#endif
+    Log::PrintMessage("Windows %s", bit);
+    Log::PrintMessage("Current working directory: %s", std::filesystem::current_path().string().c_str());
+
     if (glfwInit() == GLFW_FALSE)
     {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        Log::PrintError("Failed to initialize GLFW");
         glfwTerminate();
         return -1;
     }
@@ -87,14 +122,10 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "LearnOpenGL", nullptr, nullptr);
     if (!window)
     {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        Log::PrintError("Failed to create a GLFW window");
         glfwTerminate();
         return -1;
     }
@@ -107,7 +138,7 @@ int main()
 
     if (gladLoadGL() == 0)
     {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+        Log::PrintError("Failed to initialize GLAD");
         return -1;
     }
 
@@ -137,25 +168,24 @@ int main()
     if (!tinyobj::LoadObj(&attributes, &shapes, &materials, &warning, &error, path.c_str(), directory.c_str(), true))
         return -1;
 
-    std::cout << "vertices: " << attributes.vertices.size() << std::endl;
-    std::cout << "colors: " << attributes.colors.size() << std::endl;
-    std::cout << "normals: " << attributes.normals.size() << std::endl;
-    std::cout << "texcoords: " << attributes.texcoords.size() << std::endl;
+    Log::PrintMessage("vertices: %i", attributes.vertices.size());
+    Log::PrintMessage("colors: %i", attributes.colors.size());
+    Log::PrintMessage("normals: %i", attributes.normals.size());
+    Log::PrintMessage("texcoords: %i", attributes.texcoords.size());
 
-    std::cout << "Shapes: " << shapes.size() << std::endl;
+    Log::PrintMessage("Shapes: %i", shapes.size());
     for (const tinyobj::shape_t& shape : shapes)
     {
-        std::cout << "name: " << shape.name << std::endl;
-        std::cout << "indices: " << shape.mesh.indices.size() << std::endl;
-        std::cout << "material_ids: " << shape.mesh.material_ids.size() << std::endl;
-        std::cout << "num_face_vertices: " << shape.mesh.num_face_vertices.size() << std::endl;
+        Log::PrintMessage("name: %s", shape.name.c_str());
+        Log::PrintMessage("indices: %i", shape.mesh.indices.size());
+        Log::PrintMessage("material_ids: %i", shape.mesh.material_ids.size());
+        Log::PrintMessage("num_face_vertices: %i", shape.mesh.num_face_vertices.size());
     }
 
-    std::cout << "Materials: " << materials.size() << std::endl;
+    Log::PrintMessage("Materials: ", materials.size());
+
     for (const tinyobj::material_t& material : materials)
-    {
-        std::cout << "diffuse_texname: " << material.diffuse_texname << std::endl;
-    }
+        Log::PrintMessage("diffuse_texname: %s", material.diffuse_texname.c_str());
 
     Model model;
     for (const tinyobj::shape_t& shape : shapes)
@@ -219,17 +249,17 @@ int main()
         model.myMeshes[0].myTextures.push_back(texture);
     }
 
-    std::cout << "Textures: " << textures.size() << std::endl;
-    std::cout << "Meshes: " << model.myMeshes.size() << std::endl;
-    std::cout << "Indices: " << model.myMeshes[0].myIndices.size() << std::endl;
-    std::cout << "Vertices: " << model.myMeshes[0].myVertices.size() << std::endl;
+    Log::PrintMessage("Textures: %i", textures.size());
+    Log::PrintMessage("Meshes: %i", model.myMeshes.size());
+    Log::PrintMessage("Indices: %i", model.myMeshes[0].myIndices.size());
+    Log::PrintMessage("Vertices: %i", model.myMeshes[0].myVertices.size());
 
     constexpr glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
     constexpr glm::vec3 green = glm::vec3(0.0f, 1.0f, 0.0f);
     constexpr glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
     constexpr glm::vec3 yellow = glm::vec3(1.0f, 1.0f, 0.0f);
 
-    constexpr glm::vec3 pointLightColors[] = {red, green, blue, yellow};
+    constexpr glm::vec3 pointLightColors[] = { red, green, blue, yellow };
 
     // first, configure the cube's VAO (and vertexBufferObject)
 
@@ -337,7 +367,7 @@ int main()
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f)); // it's a bit too big for our scene, so scale it down
         lightingShader.SetMat4("model", modelMatrix);
         for (Mesh& mesh : model.myMeshes)
             mesh.Draw(lightingShader);
@@ -374,10 +404,10 @@ int main()
 
         // we now draw as many light bulbs as we have point lights.
         glBindVertexArray(lightCubeVertexArrayObject);
-        for (unsigned int i = 0; i < 4; i++)
+        for (const glm::vec3& pointLightPosition : pointLightPositions)
         {
             glm::mat4 lightCubeModelMatrix = glm::mat4(1.0f);
-            lightCubeModelMatrix = glm::translate(lightCubeModelMatrix, pointLightPositions[i]);
+            lightCubeModelMatrix = glm::translate(lightCubeModelMatrix, pointLightPosition);
             lightCubeModelMatrix = glm::scale(lightCubeModelMatrix, glm::vec3(0.2f)); // Make it a smaller cube
             lightCubeShader.SetMat4("model", lightCubeModelMatrix);
 
@@ -453,7 +483,7 @@ unsigned int LoadTexture(const std::string& aFilepath)
     unsigned char* data = stbi_load(aFilepath.c_str(), &width, &height, &channels, 0);
     if (!data)
     {
-        std::cout << "Texture failed to load at path: " << aFilepath << std::endl;
+        Log::PrintError("Texture failed to load at path: %s", aFilepath.c_str());
         stbi_image_free(data);
 
         return textureID;
@@ -479,7 +509,7 @@ unsigned int LoadTexture(const std::string& aFilepath)
         }
         default:
         {
-            std::cout << "Failed to map the right number of channels: " << channels << std::endl;
+            Log::PrintError("Failed to map the right number of channels: %i", channels);
             break;
         }
     }
