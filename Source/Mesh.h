@@ -10,18 +10,15 @@ class Shader;
 
 struct Vertex
 {
-    Vertex() : myPosition(0.0f), myNormal(0.0f), myTextureCoordinates(0.0f) {}
+    Vertex();
 
     glm::vec3 myPosition;
-    glm::vec3 myNormal;
-    //glm::vec3 myTangent;
-    //glm::vec3 myBitangent;
-    glm::vec2 myTextureCoordinates;
+    glm::vec3 myColor;
 };
 
 struct Texture
 {
-    Texture() : myType("N/A"), myPath("N/A"), myIdentifier(0) {}
+    Texture();
 
     std::string myType;
     std::string myPath;
@@ -31,11 +28,11 @@ struct Texture
 class Mesh
 {
 public:
-    Mesh() : myVertexArrayObject(0), myVertexBufferObject(0), myElementBufferObject(0) {}
-    Mesh(const std::vector<Vertex>& aVertices, const std::vector<unsigned int>& aIndices, const std::vector<Texture>& aTextures);
+    Mesh();
+    Mesh(std::vector<Vertex> aVertices, std::vector<unsigned int> aIndices, std::vector<Texture> aTextures);
 
     void SetupMesh();
-    void Draw(const Shader& aShader);
+    void Draw() const;
 
     std::vector<Vertex> myVertices;
     std::vector<Texture> myTextures;

@@ -2,8 +2,7 @@
 
 #include "Mesh.h"
 
-class Model
+struct Model
 {
-public:
 	std::vector<Mesh> myMeshes;
 };
