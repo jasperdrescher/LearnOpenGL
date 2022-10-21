@@ -37,14 +37,14 @@ int main()
 #elif _WIN64
     const char* bits = "64";
 #endif
-    LogUtility::PrintMessage("Windows %s", bits);
-    LogUtility::PrintMessage("Current working directory: %s", std::filesystem::current_path().string().c_str());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Core, "Windows %s", bits);
+    LogUtility::PrintMessage(LogUtility::LogCategory::Core, "Current working directory: %s", std::filesystem::current_path().string().c_str());
 
     glfwSetErrorCallback(GLUtility::GLFWErrorCallback);
 
     if (glfwInit() == GLFW_FALSE)
     {
-        LogUtility::PrintError("Failed to initialize GLFW");
+        LogUtility::PrintError(LogUtility::LogCategory::GLFW, "Failed to initialize GLFW");
         glfwTerminate();
         return -1;
     }
@@ -59,7 +59,7 @@ int main()
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "LearnOpenGL", nullptr, nullptr);
     if (!window)
     {
-        LogUtility::PrintError("Failed to create a GLFW window");
+        LogUtility::PrintError(LogUtility::LogCategory::GLFW, "Failed to create a GLFW window");
         glfwTerminate();
         return -1;
     }
@@ -72,7 +72,7 @@ int main()
 
     if (gladLoadGL() == 0)
     {
-        LogUtility::PrintError("Failed to initialize GLAD");
+        LogUtility::PrintError(LogUtility::LogCategory::GLAD, "Failed to initialize GLAD");
         return -1;
     }
 

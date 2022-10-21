@@ -27,7 +27,7 @@ unsigned int TextureLoader::LoadTexture(const std::string& aFilepath)
     unsigned char* data = stbi_load(aFilepath.c_str(), &width, &height, &channels, 0);
     if (!data)
     {
-        LogUtility::PrintError("Texture failed to load at path: %s", aFilepath.c_str());
+        LogUtility::PrintError(LogUtility::LogCategory::File, "Texture failed to load at path: %s", aFilepath.c_str());
         stbi_image_free(data);
 
         return textureID;
@@ -53,7 +53,7 @@ unsigned int TextureLoader::LoadTexture(const std::string& aFilepath)
         }
         default:
         {
-            LogUtility::PrintError("Failed to map the right number of channels: %i", channels);
+            LogUtility::PrintError(LogUtility::LogCategory::File, "Failed to map the right number of channels: %i", channels);
             break;
         }
     }

@@ -26,28 +26,28 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
     const std::string& directory = FileUtility::GetDirectoryFromPath(aFilepath);
     if (!tinyobj::LoadObj(&attributes, &shapes, &materials, &warning, &error, aFilepath.c_str(), directory.c_str(), true))
     {
-        LogUtility::PrintError("Failed to load obj %s", fileName.c_str());
+        LogUtility::PrintError(LogUtility::LogCategory::File, "Failed to load obj %s", fileName.c_str());
         return nullptr;
     }
 
-    LogUtility::PrintMessage("vertices: %i", attributes.vertices.size());
-    LogUtility::PrintMessage("colors: %i", attributes.colors.size());
-    LogUtility::PrintMessage("normals: %i", attributes.normals.size());
-    LogUtility::PrintMessage("texcoords: %i", attributes.texcoords.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "vertices: %i", attributes.vertices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "colors: %i", attributes.colors.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "normals: %i", attributes.normals.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "texcoords: %i", attributes.texcoords.size());
 
-    LogUtility::PrintMessage("Shapes: %i", shapes.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Shapes: %i", shapes.size());
     for (const tinyobj::shape_t& shape : shapes)
     {
-        LogUtility::PrintMessage("name: %s", shape.name.c_str());
-        LogUtility::PrintMessage("indices: %i", shape.mesh.indices.size());
-        LogUtility::PrintMessage("material_ids: %i", shape.mesh.material_ids.size());
-        LogUtility::PrintMessage("num_face_vertices: %i", shape.mesh.num_face_vertices.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "name: %s", shape.name.c_str());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "indices: %i", shape.mesh.indices.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "material_ids: %i", shape.mesh.material_ids.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "num_face_vertices: %i", shape.mesh.num_face_vertices.size());
     }
 
-    LogUtility::PrintMessage("Materials: ", materials.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Materials: ", materials.size());
 
     for (const tinyobj::material_t& material : materials)
-        LogUtility::PrintMessage("diffuse_texname: %s", material.diffuse_texname.c_str());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "diffuse_texname: %s", material.diffuse_texname.c_str());
 
     std::shared_ptr<Model> model = std::make_shared<Model>();
 
@@ -62,21 +62,6 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
             vertex.myPosition.x = attributes.vertices[vertexIndexStride];
             vertex.myPosition.y = attributes.vertices[vertexIndexStride + 1];
             vertex.myPosition.z = attributes.vertices[vertexIndexStride + 2];
-
-            /*if (!attributes.normals.empty())
-            {
-                const size_t normalIndexStride = 3 * static_cast<size_t>(index.normal_index);
-                vertex.myNormal.x = attributes.normals[normalIndexStride];
-                vertex.myNormal.y = attributes.normals[normalIndexStride + 1];
-                vertex.myNormal.z = attributes.normals[normalIndexStride + 2];
-            }*/
-
-           /* if (!attributes.texcoords.empty())
-            {
-                const size_t textureCoordinatesIndexStride = 2 * static_cast<size_t>(index.texcoord_index);
-                vertex.myTextureCoordinates.x = attributes.texcoords[textureCoordinatesIndexStride];
-                vertex.myTextureCoordinates.y = attributes.texcoords[textureCoordinatesIndexStride + 1];
-            }*/
 
             vertex.myColor = glm::vec3(1.0f);
 
@@ -114,10 +99,10 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
         model->myMeshes[0].myTextures.push_back(texture);
     }
 
-    LogUtility::PrintMessage("Textures: %i", textures.size());
-    LogUtility::PrintMessage("Meshes: %i", model->myMeshes.size());
-    LogUtility::PrintMessage("Indices: %i", model->myMeshes[0].myIndices.size());
-    LogUtility::PrintMessage("Vertices: %i", model->myMeshes[0].myVertices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Textures: %i", textures.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Meshes: %i", model->myMeshes.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Indices: %i", model->myMeshes[0].myIndices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Vertices: %i", model->myMeshes[0].myVertices.size());
 
     return model;
 }

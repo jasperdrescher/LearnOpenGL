@@ -58,7 +58,7 @@ namespace GLUtility
             }
         }
 
-        LogUtility::PrintError(errorString);
+        LogUtility::PrintError(LogUtility::LogCategory::GL, errorString);
         assert(error == GL_NO_ERROR);
     }
 
@@ -77,37 +77,37 @@ namespace GLUtility
         {
             case GL_DEBUG_SOURCE_API:
             {
-                errorMessage += "Source: API\n";
+                errorMessage += "Source: API";
                 break;
             }
             case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
             {
-                errorMessage += "Source: Window System\n";
+                errorMessage += "Source: Window System";
                 break;
             }
             case GL_DEBUG_SOURCE_SHADER_COMPILER:
             {
-                errorMessage += "Source: Shader Compiler\n";
+                errorMessage += "Source: Shader Compiler";
                 break;
             }
             case GL_DEBUG_SOURCE_THIRD_PARTY:
             {
-                errorMessage += "Source: Third Party\n";
+                errorMessage += "Source: Third Party";
                 break;
             }
             case GL_DEBUG_SOURCE_APPLICATION:
             {
-                errorMessage += "Source: Application\n";
+                errorMessage += "Source: Application";
                 break;
             }
             case GL_DEBUG_SOURCE_OTHER:
             {
-                errorMessage += "Source: Other\n";
+                errorMessage += "Source: Other";
                 break;
             }
             default:
             {
-                errorMessage += "Source: Unkown\n";
+                errorMessage += "Source: Unkown";
                 break;
             }
         }
@@ -116,52 +116,52 @@ namespace GLUtility
         {
             case GL_DEBUG_TYPE_ERROR:
             {
-                errorMessage += "Type: Error\n";
+                errorMessage += "Type: Error";
                 break;
             }
             case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
             {
-                errorMessage += "Type: Deprecated Behaviour\n";
+                errorMessage += "Type: Deprecated Behaviour";
                 break;
             }
             case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
             {
-                errorMessage += "Type: Undefined Behaviour\n";
+                errorMessage += "Type: Undefined Behaviour";
                 break;
             }
             case GL_DEBUG_TYPE_PORTABILITY:
             {
-                errorMessage += "Type: Portability\n";
+                errorMessage += "Type: Portability";
                 break;
             }
             case GL_DEBUG_TYPE_PERFORMANCE:
             {
-                errorMessage += "Type: Performance\n";
+                errorMessage += "Type: Performance";
                 break;
             }
             case GL_DEBUG_TYPE_MARKER:
             {
-                errorMessage += "Type: Marker\n";
+                errorMessage += "Type: Marker";
                 break;
             }
             case GL_DEBUG_TYPE_PUSH_GROUP:
             {
-                errorMessage += "Type: Push Group\n";
+                errorMessage += "Type: Push Group";
                 break;
             }
             case GL_DEBUG_TYPE_POP_GROUP:
             {
-                errorMessage += "Type: Pop Group\n";
+                errorMessage += "Type: Pop Group";
                 break;
             }
             case GL_DEBUG_TYPE_OTHER:
             {
-                errorMessage += "Type: Other\n";
+                errorMessage += "Type: Other";
                 break;
             }
             default:
             {
-                errorMessage += "Type: Unkown\n";
+                errorMessage += "Type: Unkown";
                 break;
             }
         }
@@ -170,40 +170,40 @@ namespace GLUtility
         {
             case GL_DEBUG_SEVERITY_HIGH:
             {
-                errorMessage += "Severity: High\n";
+                errorMessage += "Severity: High";
                 break;
             }
             case GL_DEBUG_SEVERITY_MEDIUM:
             {
-                errorMessage += "Severity: Medium\n";
+                errorMessage += "Severity: Medium";
                 break;
             }
             case GL_DEBUG_SEVERITY_LOW:
             {
-                errorMessage += "Severity: Low\n";
+                errorMessage += "Severity: Low";
                 break;
             }
             case GL_DEBUG_SEVERITY_NOTIFICATION:
             {
-                errorMessage += "Severity: Notification\n";
+                errorMessage += "Severity: Notification";
                 break;
             }
             default:
             {
-                errorMessage += "Severity: Unkown\n";
+                errorMessage += "Severity: Unkown";
                 break;
             }
         }
 
         errorMessage += aMessage;
 
-        LogUtility::PrintError(errorMessage.c_str());
+        LogUtility::PrintError(LogUtility::LogCategory::GL, errorMessage.c_str());
         assert(errorMessage.empty());
     }
 
     void GLFWErrorCallback(int anError, const char* aDescription)
     {
-        LogUtility::PrintError("%i %s", anError, aDescription);
+        LogUtility::PrintError(LogUtility::LogCategory::GLFW, "%i %s", anError, aDescription);
         assert(!aDescription);
     }
 }

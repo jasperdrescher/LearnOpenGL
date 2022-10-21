@@ -4,19 +4,23 @@
 
 namespace LogUtility
 {
-    static void PrintMessage(const char* aMessageFormat...)
+    enum class LogCategory { Core, File, GLFW, GLAD, GL, Graphics };
+    static const char* LogCategoryToChar(LogCategory aLogCategory)
     {
-        char buffer[256];
-        va_list arguments;
-        va_start(arguments, aMessageFormat);
-        const int length = std::vsnprintf(buffer, sizeof buffer, aMessageFormat, arguments);
-        va_end(arguments);
+        switch (aLogCategory)
+        {
+            case LogCategory::Core: return "Core";
+            case LogCategory::File: return "File";
+            case LogCategory::GLFW: return "GLFW";
+            case LogCategory::GLAD: return "GLAD";
+            case LogCategory::GL: return "GL";
+            case LogCategory::Graphics: return "Graphics";
+        }
 
-        if (length > 0)
-            std::printf("[Debug] %s\n", buffer);
+        return "N/A";
     }
 
-    static void PrintError(const char* aMessageFormat...)
+    static void PrintMessage(LogCategory aCategory, const char* aMessageFormat...)
     {
         char buffer[256];
         va_list arguments;
@@ -25,6 +29,18 @@ namespace LogUtility
         va_end(arguments);
 
         if (length > 0)
-            std::printf("[Error] %s\n", buffer);
+            std::printf("[Debug] [%s] %s\n", LogCategoryToChar(aCategory), buffer);
+    }
+
+    static void PrintError(LogCategory aCategory, const char* aMessageFormat...)
+    {
+        char buffer[256];
+        va_list arguments;
+        va_start(arguments, aMessageFormat);
+        const int length = std::vsnprintf(buffer, sizeof buffer, aMessageFormat, arguments);
+        va_end(arguments);
+
+        if (length > 0)
+            std::printf("[Error] [%s] %s\n", LogCategoryToChar(aCategory), buffer);
     }
 }
