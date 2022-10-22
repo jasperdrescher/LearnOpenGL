@@ -1,5 +1,6 @@
 #include "Camera.h"
 
+#include "AppDefinitions.h"
 #include "InputManager.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -22,7 +23,7 @@ Camera::Camera()
 	, myKeySpeed(2.5f)
 	, myKeyBoostMultiplier(2.0f)
 {
-	myProjection = glm::perspective(glm::radians(myFieldOfView), 1280.0f / 720.0f, 0.1f, 100.0f);
+	myProjection = glm::perspective(glm::radians(myFieldOfView), static_cast<float>(screenWidth) / screenHeight, 0.1f, 100.0f);
 	myPosition = glm::vec3(4.0f, 3.0f, 3.0f);
 	myFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	myRight = glm::vec3(1.0f, 0.0f, 0.0f);

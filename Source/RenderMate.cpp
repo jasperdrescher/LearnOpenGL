@@ -1,8 +1,6 @@
 #include "RenderMate.h"
 
-#include <GLFW/glfw3.h>
-#include <glm/gtx/transform.hpp>
-
+#include "AppDefinitions.h"
 #include "Camera.h"
 #include "GLUtility.h"
 #include "LogUtility.h"
@@ -12,11 +10,8 @@
 #include "Shader.h"
 #include "TextureLoader.h"
 
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
-bool firstMouse = true;
-float lastX = WINDOW_WIDTH / 2.0f;
-float lastY = WINDOW_HEIGHT / 2.0f;
+#include <GLFW/glfw3.h>
+#include <glm/gtx/transform.hpp>
 
 RenderMate::RenderMate()
     : myWindow(nullptr)
@@ -120,7 +115,7 @@ void RenderMate::CreateWindow()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
-    myWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "LearnOpenGL", nullptr, nullptr);
+    myWindow = glfwCreateWindow(screenWidth, screenHeight, "LearnOpenGL", nullptr, nullptr);
     if (!myWindow)
     {
         LogUtility::PrintError(LogUtility::LogCategory::GLFW, "Failed to create a GLFW window");
