@@ -1,10 +1,11 @@
 #include "Shader.h"
 
+#include "LogUtility.h"
+
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <sstream>
-#include <iostream>
 #include <fstream>
 
 Shader::Shader()
@@ -45,7 +46,7 @@ void Shader::Load(const char* aVertexFilepath, const char* aFragmentFilepath, co
 	}
 	catch (std::ifstream::failure& aException)
 	{
-		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ " << aException.what() << std::endl;
+		LogUtility::PrintError(LogUtility::LogCategory::GL, aException.what());
 	}
 
 	const char* vertexShaderCode = vertexCode.c_str();
@@ -87,7 +88,7 @@ void Shader::Load(const char* aVertexFilepath, const char* aFragmentFilepath, co
 		glDeleteShader(geometry);
 }
 
-void Shader::Use()
+void Shader::Use() const
 {
 	glUseProgram(myIdentifier);
 }
@@ -147,7 +148,7 @@ void Shader::CheckCompileErrors(const unsigned int aShader, const std::string& a
 		if (!success)
 		{
 			glGetShaderInfoLog(aShader, 1024, nullptr, infoLog);
-			std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << aType << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+			LogUtility::PrintError(LogUtility::LogCategory::GL, "Shader compilation for %s failed because %s", aType.c_str(), infoLog);
 		}
 	}
 	else
@@ -156,7 +157,7 @@ void Shader::CheckCompileErrors(const unsigned int aShader, const std::string& a
 		if (!success)
 		{
 			glGetProgramInfoLog(aShader, 1024, nullptr, infoLog);
-			std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << aType << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+			LogUtility::PrintError(LogUtility::LogCategory::GL, "Shader linking for %s failed because %s", aType.c_str(), infoLog);
 		}
 	}
 }

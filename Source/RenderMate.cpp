@@ -138,6 +138,10 @@ void RenderMate::CreateWindow()
         glfwSetInputMode(myWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     glfwSetScrollCallback(myWindow, ScrollCallback);
     glfwSetMouseButtonCallback(myWindow, MouseButtonCallback);
+
+    int major, minor, revision;
+    glfwGetVersion(&major, &minor, &revision);
+    LogUtility::PrintMessage(LogUtility::LogCategory::GLFW, "GLFW %i.%i.%i", major, minor, revision);
 }
 
 void RenderMate::CreateContext()
@@ -165,6 +169,11 @@ void RenderMate::CreateContext()
     glCullFace(GL_BACK);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    LogUtility::PrintMessage(LogUtility::LogCategory::GL, "OpenGL %s", glGetString(GL_VERSION));
+    LogUtility::PrintMessage(LogUtility::LogCategory::GL, "Vendor %s", glGetString(GL_VENDOR));
+    LogUtility::PrintMessage(LogUtility::LogCategory::GL, "Renderer %s", glGetString(GL_RENDERER));
+    LogUtility::PrintMessage(LogUtility::LogCategory::GL, "GLSL %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
 void RenderMate::FrameBufferSizeCallback(GLFWwindow* aWindow, int aWidth, int aHeight)

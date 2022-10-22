@@ -10,7 +10,7 @@ public:
     Shader();
 
     void Load(const char* aVertexFilepath, const char* aFragmentFilepath, const char* aGeometryFilepath = nullptr);
-    void Use();
+    void Use() const;
 
     void SetBool(const std::string& aName, const bool aValue) const;
     void SetInt(const std::string& aName, const int aValue) const;
@@ -25,6 +25,6 @@ public:
     unsigned int myIdentifier;
 
 private:
-    void CheckCompileErrors(const unsigned int aShader, const std::string& aType);
+    static void CheckCompileErrors(const unsigned int aShader, const std::string& aType);
     [[nodiscard]] int GetLocation(const std::string& aName) const;
 };
