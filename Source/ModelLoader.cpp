@@ -31,25 +31,25 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
         return nullptr;
     }
 
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Loading %s", fileName.c_str());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- vertices: %i", attributes.vertices.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- colors: %i", attributes.colors.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- normals: %i", attributes.normals.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- texcoords: %i", attributes.texcoords.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "Loading %s", fileName.c_str());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- vertices: %i", attributes.vertices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- colors: %i", attributes.colors.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- normals: %i", attributes.normals.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- texcoords: %i", attributes.texcoords.size());
 
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- shapes: %i", shapes.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- shapes: %i", shapes.size());
     for (const tinyobj::shape_t& shape : shapes)
     {
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- name: %s", shape.name.c_str());
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- indices: %i", shape.mesh.indices.size());
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- material_ids: %i", shape.mesh.material_ids.size());
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- num_face_vertices: %i", shape.mesh.num_face_vertices.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::File, "- name: %s", shape.name.c_str());
+        LogUtility::PrintMessage(LogUtility::LogCategory::File, "- indices: %i", shape.mesh.indices.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::File, "- material_ids: %i", shape.mesh.material_ids.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::File, "- num_face_vertices: %i", shape.mesh.num_face_vertices.size());
     }
 
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- materials: %i", materials.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- materials: %i", materials.size());
 
     for (const tinyobj::material_t& material : materials)
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- diffuse_texname: %s", material.diffuse_texname.c_str());
+        LogUtility::PrintMessage(LogUtility::LogCategory::File, "- diffuse_texname: %s", material.diffuse_texname.c_str());
 
     std::shared_ptr<Model> model = std::make_shared<Model>();
 
@@ -110,10 +110,12 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
         model->myMeshes[0].myTextures.push_back(texture);
     }
 
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- textures: %i", textures.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- meshes: %i", model->myMeshes.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- indices: %i", model->myMeshes[0].myIndices.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- vertices: %i", model->myMeshes[0].myVertices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- textures: %i", textures.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- meshes: %i", model->myMeshes.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- indices: %i", model->myMeshes[0].myIndices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "- vertices: %i", model->myMeshes[0].myVertices.size());
+
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "Loaded %s", fileName.c_str());
 
     return model;
 }

@@ -1,40 +1,44 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-enum class CameraMovementDirection
-{
-    Forward,
-    Backward,
-    Left,
-    Right
-};
+#include <glm/mat4x4.hpp>
 
 class Camera
 {
 public:
-    Camera(const glm::vec3& aPosition);
-    Camera(const glm::vec3& aPosition, const glm::vec3& aUp, const float aYaw, const float aPitch);
+	Camera();
+	~Camera() = default;
 
-    void ProcessKeyboard(const CameraMovementDirection aDirection, const float aDeltaTime);
-    void ProcessMouseMovement(const float aXOffset, const float aYOffset, const GLboolean aConstrainPitch = true);
-    void ProcessMouseScroll(const float aYOffset);
+	void Update(float aDeltaTime);
 
-    [[nodiscard]] glm::mat4 GetViewMatrix() const;
+	void SetViewportSize(const glm::vec2& aSize);
+	void SetPosition(const glm::vec3& aPosition);
 
-    glm::vec3 myPosition;
-    glm::vec3 myFront;
-    glm::vec3 myUp;
-    glm::vec3 myRight;
-    glm::vec3 myWorldUp;
-    float myYaw;
-    float myPitch;
-    float myMovementSpeed;
-    float myMouseSensitivity;
-    float myZoom;
+	const glm::mat4x4& GetProjectionMatrix() const { return myProjection; }
+	const glm::mat4x4& GetViewMatrix() const { return myView; }
+	const glm::vec3& GetPosition() const { return myPosition; }
+	const glm::vec3& GetFront() const { return myFront; }
+	const glm::vec3& GetRight() const { return myRight; }
+	const glm::vec3& GetUp() const { return myUp; }
+	const glm::vec3& GetDirection() const { return myDirection; }
+
+	const float GetFieldOfView() const { return myFieldOfView; }
+	const float GetHorizontalAngle() const { return myHorizontalAngle; }
+	const float GetVerticalAngle() const { return myVerticalAngle; }
 
 private:
-    void UpdateCameraVectors();
+	glm::mat4 myProjection;
+	glm::mat4 myView;
+	glm::vec3 myPosition;
+	glm::vec3 myFront;
+	glm::vec3 myRight;
+	glm::vec3 myUp;
+	glm::vec3 myDirection;
+	glm::vec2 myViewport;
+	float myHorizontalAngle;
+	float myVerticalAngle;
+	float myDefaultFieldOfView;
+	float myFieldOfView;
+	float myMouseSpeed;
+	float myKeySpeed;
+	float myKeyBoostMultiplier;
 };

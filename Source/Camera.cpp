@@ -1,97 +1,84 @@
 #include "Camera.h"
 
-#define YAW -90.0f
-#define PITCH 0.0f
-#define SPEED 2.5f
-#define SENSITIVITY 0.1f
-#define ZOOM 45.0f
+#include "InputManager.h"
 
-Camera::Camera(const glm::vec3& aPosition)
-    : myPosition(aPosition)
-    , myFront(glm::vec3(0.0f, 0.0f, -1.0f))
-    , myUp(glm::vec3(0.0f, 1.0f, 0.0f))
-    , myRight(0.0f)
-    , myWorldUp(glm::vec3(0.0f, 1.0f, 0.0f))
-    , myYaw(YAW)
-    , myPitch(PITCH)
-    , myMovementSpeed(SPEED)
-    , myMouseSensitivity(SENSITIVITY)
-    , myZoom(ZOOM)
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
+
+Camera::Camera()
+	: myProjection(0.0f)
+	, myView(0.0f)
+	, myPosition(0.0f)
+	, myFront(0.0f)
+	, myRight(0.0f)
+	, myUp(0.0f)
+	, myDirection(0.0f)
+	, myViewport(0.0f)
+	, myHorizontalAngle(3.14f)
+	, myVerticalAngle(0.0f)
+	, myDefaultFieldOfView(45.0f)
+	, myFieldOfView(myDefaultFieldOfView)
+	, myMouseSpeed(0.01f)
+	, myKeySpeed(2.5f)
+	, myKeyBoostMultiplier(2.0f)
 {
-    UpdateCameraVectors();
+	myProjection = glm::perspective(glm::radians(myFieldOfView), 1280.0f / 720.0f, 0.1f, 100.0f);
+	myPosition = glm::vec3(4.0f, 3.0f, 3.0f);
+	myFront = glm::vec3(0.0f, 0.0f, -1.0f);
+	myRight = glm::vec3(1.0f, 0.0f, 0.0f);
+	myUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	myView = glm::lookAt(myPosition, myPosition + myFront, myUp);
+	myDirection = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
-Camera::Camera(const glm::vec3& aPosition, const glm::vec3& aUp, const float aYaw, const float aPitch)
-    : myPosition(aPosition)
-    , myFront(glm::vec3(0.0f, 0.0f, -1.0f))
-    , myUp(glm::vec3(0.0f, 1.0f, 0.0f))
-    , myRight(0.0f)
-    , myWorldUp(aUp)
-    , myYaw(aYaw)
-    , myPitch(aPitch)
-    , myMovementSpeed(SPEED)
-    , myMouseSensitivity(SENSITIVITY)
-    , myZoom(ZOOM)
+void Camera::Update(float aDeltaTime)
 {
-    UpdateCameraVectors();
+	float movementSpeed = myKeySpeed;
+
+	const InputManager& inputManager = InputManager::GetInstance();
+	if (inputManager.IsKeyDown(Keys::LeftShift))
+		movementSpeed *= myKeyBoostMultiplier;
+
+	if (inputManager.IsKeyDown(Keys::W))
+		myPosition += aDeltaTime * movementSpeed * myFront;
+
+	if (inputManager.IsKeyDown(Keys::A))
+		myPosition -= aDeltaTime * movementSpeed * glm::normalize(glm::cross(myFront, myUp));
+
+	if (inputManager.IsKeyDown(Keys::S))
+		myPosition -= aDeltaTime * movementSpeed * myFront;
+
+	if (inputManager.IsKeyDown(Keys::D))
+		myPosition += aDeltaTime * movementSpeed * glm::normalize(glm::cross(myFront, myUp));
+
+	if (inputManager.IsKeyDown(Keys::Spacebar))
+		myPosition += aDeltaTime * movementSpeed * myUp;
+
+	if (inputManager.IsKeyDown(Keys::LeftControl))
+		myPosition -= aDeltaTime * movementSpeed * myUp;
+
+	if (inputManager.IsMouseButtonDown(MouseButtons::Right))
+	{
+		myHorizontalAngle += aDeltaTime * myMouseSpeed * (1280.0f / 2.0f - inputManager.GetCursorXPosition());
+		myVerticalAngle += aDeltaTime * myMouseSpeed * (720.0f / 2.0f - inputManager.GetCursorYPosition());
+	}
+
+	myDirection = glm::vec3(cos(myVerticalAngle) * sin(myHorizontalAngle), sin(myVerticalAngle), cos(myVerticalAngle) * cos(myHorizontalAngle));
+	myRight = glm::vec3(sin(myHorizontalAngle - 3.14f / 2.0f), 0.0f, cos(myHorizontalAngle - 3.14f / 2.0f));
+	myUp = glm::cross(myRight, myDirection);
+	myFront = glm::normalize(myDirection);
+	myFieldOfView = myDefaultFieldOfView - 5.0f * inputManager.GetScrollYOffset();
+
+	myProjection = glm::perspective(glm::radians(myFieldOfView), 1280.0f / 720.0f, 0.1f, 100.0f);
+	myView = glm::lookAt(myPosition, myPosition + myDirection, myUp);
 }
 
-glm::mat4 Camera::GetViewMatrix() const
+void Camera::SetViewportSize(const glm::vec2& aSize)
 {
-    return glm::lookAt(myPosition, myPosition + myFront, myUp);
+	myViewport = glm::vec2(aSize);
 }
 
-void Camera::ProcessKeyboard(const CameraMovementDirection aDirection, const float aDeltaTime)
+void Camera::SetPosition(const glm::vec3& aPosition)
 {
-    const float velocity = myMovementSpeed * aDeltaTime;
-    if (aDirection == CameraMovementDirection::Forward)
-        myPosition += myFront * velocity;
-    if (aDirection == CameraMovementDirection::Backward)
-        myPosition -= myFront * velocity;
-    if (aDirection == CameraMovementDirection::Left)
-        myPosition -= myRight * velocity;
-    if (aDirection == CameraMovementDirection::Right)
-        myPosition += myRight * velocity;
-}
-
-void Camera::ProcessMouseMovement(float aXOffset, float aYOffset, GLboolean aConstrainPitch)
-{
-    aXOffset *= myMouseSensitivity;
-    aYOffset *= myMouseSensitivity;
-
-    myYaw += aXOffset;
-    myPitch += aYOffset;
-
-    // make sure that when pitch is out of bounds, screen doesn't get flipped
-    if (aConstrainPitch)
-    {
-        if (myPitch > 89.0f)
-            myPitch = 89.0f;
-        if (myPitch < -89.0f)
-            myPitch = -89.0f;
-    }
-
-    // update myFront, myRight and myUp Vectors using the updated Euler angles
-    UpdateCameraVectors();
-}
-
-void Camera::ProcessMouseScroll(const float aYOffset)
-{
-    myZoom -= aYOffset;
-    if (myZoom < 1.0f)
-        myZoom = 1.0f;
-    if (myZoom > 45.0f)
-        myZoom = 45.0f;
-}
-
-void Camera::UpdateCameraVectors()
-{
-    glm::vec3 front;
-    front.x = cos(glm::radians(myYaw)) * cos(glm::radians(myPitch));
-    front.y = sin(glm::radians(myPitch));
-    front.z = sin(glm::radians(myYaw)) * cos(glm::radians(myPitch));
-    myFront = glm::normalize(front);
-    // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    myRight = glm::normalize(glm::cross(myFront, myWorldUp));
-    myUp = glm::normalize(glm::cross(myRight, myFront));
+	myPosition = aPosition;
 }
