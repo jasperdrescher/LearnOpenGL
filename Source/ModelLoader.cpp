@@ -7,8 +7,9 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
-#include <unordered_map>
 #include <glm/gtx/hash.hpp>
+
+#include <unordered_map>
 
 ModelLoader::ModelLoader(TextureLoader& aTextureLoader)
     : myTextureLoader(aTextureLoader)
@@ -30,24 +31,25 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
         return nullptr;
     }
 
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "vertices: %i", attributes.vertices.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "colors: %i", attributes.colors.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "normals: %i", attributes.normals.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "texcoords: %i", attributes.texcoords.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Loading %s", fileName.c_str());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- vertices: %i", attributes.vertices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- colors: %i", attributes.colors.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- normals: %i", attributes.normals.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- texcoords: %i", attributes.texcoords.size());
 
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Shapes: %i", shapes.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- shapes: %i", shapes.size());
     for (const tinyobj::shape_t& shape : shapes)
     {
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "name: %s", shape.name.c_str());
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "indices: %i", shape.mesh.indices.size());
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "material_ids: %i", shape.mesh.material_ids.size());
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "num_face_vertices: %i", shape.mesh.num_face_vertices.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- name: %s", shape.name.c_str());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- indices: %i", shape.mesh.indices.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- material_ids: %i", shape.mesh.material_ids.size());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- num_face_vertices: %i", shape.mesh.num_face_vertices.size());
     }
 
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Materials: ", materials.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- materials: %i", materials.size());
 
     for (const tinyobj::material_t& material : materials)
-        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "diffuse_texname: %s", material.diffuse_texname.c_str());
+        LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- diffuse_texname: %s", material.diffuse_texname.c_str());
 
     std::shared_ptr<Model> model = std::make_shared<Model>();
 
@@ -63,7 +65,16 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
             vertex.myPosition.y = attributes.vertices[vertexIndexStride + 1];
             vertex.myPosition.z = attributes.vertices[vertexIndexStride + 2];
 
-            vertex.myColor = glm::vec3(1.0f);
+             if (!attributes.colors.empty())
+             {
+                 vertex.myColor.x = attributes.colors[vertexIndexStride];
+                 vertex.myColor.y = attributes.colors[vertexIndexStride + 1];
+                 vertex.myColor.z = attributes.colors[vertexIndexStride + 2];
+             }
+             else
+             {
+                vertex.myColor = glm::vec3(1.0f);
+             }
 
             if (uniqueVertices.count(vertex.myPosition) == 0)
             {
@@ -99,10 +110,10 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
         model->myMeshes[0].myTextures.push_back(texture);
     }
 
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Textures: %i", textures.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Meshes: %i", model->myMeshes.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Indices: %i", model->myMeshes[0].myIndices.size());
-    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "Vertices: %i", model->myMeshes[0].myVertices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- textures: %i", textures.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- meshes: %i", model->myMeshes.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- indices: %i", model->myMeshes[0].myIndices.size());
+    LogUtility::PrintMessage(LogUtility::LogCategory::Graphics, "- vertices: %i", model->myMeshes[0].myVertices.size());
 
     return model;
 }
