@@ -33,9 +33,9 @@ float lastFrame = 0.0f;
 int main()
 {
 #if _WIN32
-    const char* bits = "32";
+    const char* bits = "x86";
 #elif _WIN64
-    const char* bits = "64";
+    const char* bits = "x64";
 #endif
     LogUtility::PrintMessage(LogUtility::LogCategory::Core, "Windows %s", bits);
     LogUtility::PrintMessage(LogUtility::LogCategory::Core, "Current working directory: %s", std::filesystem::current_path().string().c_str());
