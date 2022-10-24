@@ -6,6 +6,7 @@
 Vertex::Vertex()
     : myPosition(0.0f)
     , myColor(0.0f)
+    , myTextureCoordinates(0.0f)
 {
 }
 
@@ -34,6 +35,9 @@ Mesh::Mesh(std::vector<Vertex> aVertices, std::vector<unsigned int> aIndices, st
 
 void Mesh::Draw() const
 {
+    if (!myTextures.empty())
+        glBindTexture(GL_TEXTURE_2D, myTextures[0].myIdentifier);
+
     glBindVertexArray(myVertexArrayObject);
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(myIndices.size()), GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
@@ -55,4 +59,6 @@ void Mesh::SetupMesh()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myColor)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, myTextureCoordinates)));
+    glEnableVertexAttribArray(2);
 }

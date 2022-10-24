@@ -22,7 +22,7 @@ namespace LogUtility
 
     static void PrintMessage(LogCategory aCategory, const char* aMessageFormat...)
     {
-        char buffer[256];
+        char buffer[512];
         va_list arguments;
         va_start(arguments, aMessageFormat);
         const int length = std::vsnprintf(buffer, sizeof buffer, aMessageFormat, arguments);
@@ -34,7 +34,7 @@ namespace LogUtility
 
     static void PrintError(LogCategory aCategory, const char* aMessageFormat...)
     {
-        char buffer[256];
+        char buffer[512];
         va_list arguments;
         va_start(arguments, aMessageFormat);
         const int length = std::vsnprintf(buffer, sizeof buffer, aMessageFormat, arguments);

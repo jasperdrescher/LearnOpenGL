@@ -39,9 +39,9 @@ void RenderMate::Initialize()
     myCamera->SetPosition(glm::vec3(0.0f, 0.0f, 3.0f));
 
     myShader = new Shader();
-    myShader->Load("Data/Shaders/ColoredCube.vert.glsl", "Data/Shaders/ColoredCube.frag.glsl");
+    myShader->Load("Data/Shaders/TexturedCube.vert.glsl", "Data/Shaders/TexturedCube.frag.glsl");
 
-    const std::string objFilepath = "Data/Models/ColoredCube/ColoredCube.obj";
+    const std::string objFilepath = "Data/Models/MagicCube/MagicCube.obj";
 
     myTextureLoader = new TextureLoader();
     myModelLoader = new ModelLoader(*myTextureLoader);

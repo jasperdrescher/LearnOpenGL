@@ -112,6 +112,8 @@ namespace GLUtility
             }
         }
 
+        errorMessage += " ";
+
         switch (aType)
         {
             case GL_DEBUG_TYPE_ERROR:
@@ -166,6 +168,8 @@ namespace GLUtility
             }
         }
 
+        errorMessage += " ";
+
         switch (aSeverity)
         {
             case GL_DEBUG_SEVERITY_HIGH:
@@ -195,6 +199,7 @@ namespace GLUtility
             }
         }
 
+        errorMessage += " ";
         errorMessage += aMessage;
 
         LogUtility::PrintError(LogUtility::LogCategory::GL, errorMessage.c_str());

@@ -27,9 +27,9 @@ private:
 	static void CreateContext();
 	static void FrameBufferSizeCallback(GLFWwindow* aWindow, int aWidth, int aHeight);
 	static void KeyCallback(GLFWwindow* aWindow, int aKey, int aScancode, int anAction, int aMode);
-    static void CursorCallback(GLFWwindow* aWindow, double aXPosition, double aYPosition);
-    static void ScrollCallback(GLFWwindow* aWindow, double aXOffset, double aYOffset);
-    static void MouseButtonCallback(GLFWwindow* aWindow, int aButton, int anAction, int aModifiers);
+	static void CursorCallback(GLFWwindow* aWindow, double aXPosition, double aYPosition);
+	static void ScrollCallback(GLFWwindow* aWindow, double aXOffset, double aYOffset);
+	static void MouseButtonCallback(GLFWwindow* aWindow, int aButton, int anAction, int aModifiers);
 
 	std::vector<std::shared_ptr<Model>> myModels;
 	GLFWwindow* myWindow;

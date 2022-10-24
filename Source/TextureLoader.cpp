@@ -18,8 +18,8 @@ unsigned int TextureLoader::LoadTexture(const std::string& aFilepath)
        }
    }
 
-    unsigned int textureID = 0;
-    glGenTextures(1, &textureID);
+    unsigned int textureIdentifier = 0;
+    glGenTextures(1, &textureIdentifier);
 
     int width = 0;
     int height = 0;
@@ -30,7 +30,7 @@ unsigned int TextureLoader::LoadTexture(const std::string& aFilepath)
         LogUtility::PrintError(LogUtility::LogCategory::File, "Texture failed to load at path: %s", aFilepath.c_str());
         stbi_image_free(data);
 
-        return textureID;
+        return textureIdentifier;
     }
 
     GLenum format = GL_RED;
@@ -58,18 +58,20 @@ unsigned int TextureLoader::LoadTexture(const std::string& aFilepath)
         }
     }
 
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, static_cast<int>(format), width, height, 0, format, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    glBindTexture(GL_TEXTURE_2D, textureIdentifier);
+    glTexImage2D(GL_TEXTURE_2D, 0, static_cast<int>(format), width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
     stbi_image_free(data);
 
-    myLoadedTextures.emplace(hash, textureID);
+    myLoadedTextures.emplace(hash, textureIdentifier);
 
-    return textureID;
+    LogUtility::PrintMessage(LogUtility::LogCategory::File, "Loaded %s with identifier %i, format %i, width %i and height %i", aFilepath.c_str(), textureIdentifier, channels, width, height);
+
+    return textureIdentifier;
 }

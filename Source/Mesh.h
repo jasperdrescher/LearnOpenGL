@@ -14,6 +14,7 @@ struct Vertex
 
     glm::vec3 myPosition;
     glm::vec3 myColor;
+    glm::vec2 myTextureCoordinates;
 };
 
 struct Texture

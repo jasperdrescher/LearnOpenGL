@@ -76,6 +76,13 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
                 vertex.myColor = glm::vec3(1.0f);
              }
 
+            if (!attributes.texcoords.empty())
+            {
+                const size_t textureCoordinatesIndexStride = 2 * static_cast<size_t>(index.texcoord_index);
+                vertex.myTextureCoordinates.x = attributes.texcoords[textureCoordinatesIndexStride];
+                vertex.myTextureCoordinates.y = attributes.texcoords[textureCoordinatesIndexStride + 1];
+            }
+
             if (uniqueVertices.count(vertex.myPosition) == 0)
             {
                 uniqueVertices[vertex.myPosition] = static_cast<uint32_t>(mesh.myVertices.size());
