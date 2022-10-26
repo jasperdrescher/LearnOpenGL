@@ -34,6 +34,7 @@ public:
 
     void SetupMesh();
     void Draw() const;
+    void Destroy() const;
 
     std::vector<Vertex> myVertices;
     std::vector<Texture> myTextures;
@@ -43,4 +44,7 @@ public:
 
 private:
     unsigned int myElementBufferObject;
+    unsigned int myVertexAttributePositionIdentifier;
+    unsigned int myVertexAttributeColorsIdentifier;
+    unsigned int myVertexAttributeTextureCoordinatesIdentifier;
 };

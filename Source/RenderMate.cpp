@@ -88,6 +88,12 @@ void RenderMate::Update(float aDeltaTime) const
 
 void RenderMate::Destroy() const
 {
+    for (const std::shared_ptr<Model>& model : myModels)
+    {
+        for (Mesh& mesh : model->myMeshes)
+            mesh.Destroy();
+    }
+
     glfwDestroyWindow(myWindow);
     glfwTerminate();
 }
