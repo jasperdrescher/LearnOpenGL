@@ -4,6 +4,8 @@
 #include "LogUtility.h"
 #include "Mesh.h"
 #include "Model.h"
+#include "Texture.h"
+#include "VertexHash.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -52,11 +54,11 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
         LogUtility::PrintMessage(LogUtility::LogCategory::File, "- diffuse_texname: %s", material.diffuse_texname.c_str());
 
     std::shared_ptr<Model> model = std::make_shared<Model>();
+    std::unordered_map<Vertex, uint32_t> uniqueVertices;
+    Mesh mesh;
 
     for (const tinyobj::shape_t& shape : shapes)
     {
-        Mesh mesh;
-        std::unordered_map<glm::vec3, uint32_t> uniqueVertices;
         for (const tinyobj::index_t& index : shape.mesh.indices)
         {
             Vertex vertex;
@@ -80,16 +82,16 @@ std::shared_ptr<Model> ModelLoader::LoadModel(const std::string& aFilepath) cons
             {
                 const size_t textureCoordinatesIndexStride = 2 * static_cast<size_t>(index.texcoord_index);
                 vertex.myTextureCoordinates.x = attributes.texcoords[textureCoordinatesIndexStride];
-                vertex.myTextureCoordinates.y = attributes.texcoords[textureCoordinatesIndexStride + 1];
+                vertex.myTextureCoordinates.y = 1.0f - attributes.texcoords[textureCoordinatesIndexStride + 1];
             }
 
-            if (uniqueVertices.count(vertex.myPosition) == 0)
+            if (uniqueVertices.count(vertex) == 0)
             {
-                uniqueVertices[vertex.myPosition] = static_cast<uint32_t>(mesh.myVertices.size());
+                uniqueVertices[vertex] = static_cast<uint32_t>(mesh.myVertices.size());
                 mesh.myVertices.push_back(vertex);
             }
 
-            mesh.myIndices.push_back(uniqueVertices[vertex.myPosition]);
+            mesh.myIndices.push_back(uniqueVertices[vertex]);
         }
 
         model->myMeshes.push_back(mesh);

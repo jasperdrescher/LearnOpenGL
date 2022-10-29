@@ -1,10 +1,10 @@
 #include "Camera.h"
 
-#include "AppDefinitions.h"
-#include "InputManager.h"
-
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+
+#include "AppDefinitions.h"
+#include "InputManager.h"
 
 Camera::Camera()
 	: myProjection(0.0f)

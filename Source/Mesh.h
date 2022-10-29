@@ -1,30 +1,10 @@
 #pragma once
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-
-#include <string>
 #include <vector>
 
+struct Texture;
+struct Vertex;
 class Shader;
-
-struct Vertex
-{
-    Vertex();
-
-    glm::vec3 myPosition;
-    glm::vec3 myColor;
-    glm::vec2 myTextureCoordinates;
-};
-
-struct Texture
-{
-    Texture();
-
-    std::string myType;
-    std::string myPath;
-    unsigned int myIdentifier;
-};
 
 class Mesh
 {

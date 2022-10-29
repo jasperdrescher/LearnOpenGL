@@ -1,21 +1,10 @@
 #include "Mesh.h"
-#include "Shader.h"
 
 #include <glad/glad.h>
 
-Vertex::Vertex()
-    : myPosition(0.0f)
-    , myColor(0.0f)
-    , myTextureCoordinates(0.0f)
-{
-}
-
-Texture::Texture()
-    : myType("N/A")
-    , myPath("N/A")
-    , myIdentifier(0)
-{
-}
+#include "Shader.h"
+#include "Texture.h"
+#include "Vertex.h"
 
 Mesh::Mesh()
     : myVertexArrayObject(0)
